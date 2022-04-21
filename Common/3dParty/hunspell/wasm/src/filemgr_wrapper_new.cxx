@@ -9,6 +9,7 @@
 #include "csutil.hxx"
 
 #include "./engine.h"
+#include "string_buffer_stream.h"
 
 int FileMgr::fail(const char *err, const char *par)
 {
@@ -17,7 +18,7 @@ int FileMgr::fail(const char *err, const char *par)
 }
 
 FileMgr::FileMgr(const char *file, const char *key)
-    : hin(NULL), linenum(0), memin(NULL)
+    : hin(NULL), fin(NULL), linenum(0)
 {
     in[0] = '\0';
 
@@ -28,7 +29,9 @@ FileMgr::FileMgr(const char *file, const char *key)
     }
     else
     {
-        memin.from_buffer((char *)file_memory->data, file_memory->len);
+        index = 0;
+        size = file_memory->len;
+        memory = (char*)file_memory->data;
     }
 }
 
@@ -40,6 +43,7 @@ FileMgr::~FileMgr()
 
 bool FileMgr::getline(std::string &dest)
 {
+    string_buffer_stream memin(memory, size);
 	bool ret = memin.get_line(dest);
 	if (ret)
 		++linenum;	
