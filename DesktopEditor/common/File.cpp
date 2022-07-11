@@ -385,6 +385,9 @@ namespace NSFile
     }
     void CUtf8Converter::GetUnicodeStringFromUTF8( BYTE* pBuffer, LONG lCount, std::wstring& sOutput )
     {
+        if (0 == lCount)
+            return;
+
         if (sizeof(WCHAR) == 2)
             GetUnicodeStringFromUTF8_2bytes(pBuffer, lCount, sOutput);
         else

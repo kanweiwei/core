@@ -61,4 +61,25 @@ namespace NSSystemUtils
 		}
 #endif
 	}
+
+    std::string GetEnvVariableA(const std::wstring& strName)
+    {
+#if defined(_WIN32) || defined(_WIN32_WCE) || defined(_WIN64)
+        wchar_t* pVal = _wgetenv(strName.c_str());
+        if (NULL != pVal)
+        {
+            std::wstring sRes(pVal);
+            return U_TO_UTF8(sRes);
+        }
+        return "";
+#else
+        std::string strNameA = NSFile::CUtf8Converter::GetUtf8StringFromUnicode(strName);
+        char* pValA = getenv(strNameA.c_str());
+        if (NULL != pValA)
+        {
+            return std::string((BYTE*)pValA, strlen(pValA));
+        }
+        return "";
+#endif
+    }
 }

@@ -51,5 +51,6 @@ namespace NSSystemUtils
 	static const wchar_t* gc_EnvMemoryLimitDefault = L"4GiB";
 
 	KERNEL_DECL std::wstring GetEnvVariable(const std::wstring& strName);
+    KERNEL_DECL std::string GetEnvVariableA(const std::wstring& strName);
 }
 #endif // _SYSTEMUTILS_H
