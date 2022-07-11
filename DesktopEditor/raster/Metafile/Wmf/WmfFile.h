@@ -34,10 +34,7 @@
 
 #include "../../../common/StringExt.h"
 
-#ifdef METAFILE_DISABLE_FILESYSTEM
-#endif
-        #include "../../../fontengine/FontManager.h"
-#endif
+#include "../../../graphics/pro/Fonts.h"
 
 #include "../Common/IOutputDevice.h"
 #include "../Common/MetaFile.h"
@@ -69,16 +66,12 @@ namespace MetaFile
 		{
 			if (NULL != m_pParser)
 			{
-				#ifdef METAFILE_DISABLE_FILESYSTEM
-				#else
-				CFontManager *pFont = m_pParser->GetFontManager();
-				#endif
+                NSFonts::IFontManager *pFont = m_pParser->GetFontManager();
+
 				delete m_pParser;
 				m_pParser = new CWmfParser();
-				#ifdef METAFILE_DISABLE_FILESYSTEM
-				#else
+
 				m_pParser->SetFontManager(pFont);
-				#endif
 			}
 
 			return m_pParser->OpenFromFile(wsFilePath);
@@ -104,13 +97,11 @@ namespace MetaFile
 			m_pParser->Close();
 		}
 
-		#ifdef METAFILE_DISABLE_FILESYSTEM
-		#else
-		void SetFontManager(CFontManager* pFontManager)
+        void SetFontManager(NSFonts::IFontManager* pFontManager)
 		{
 			m_pParser->SetFontManager(pFontManager);
 		}
-		#endif
+
 		bool CheckError()
 		{
 			return m_pParser->CheckError();

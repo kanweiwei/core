@@ -37,10 +37,7 @@
 #include "MetaFileObjects.h"
 #include "MetaFileClip.h"
 
-#ifdef METAFILE_DISABLE_FILESYSTEM
-#endif
-	#include "../../../fontengine/FontManager.h"
-#endif
+#include "../../../graphics/pro/Fonts.h"
 
 namespace MetaFile
 {
@@ -82,17 +79,15 @@ namespace MetaFile
 		virtual bool         IsWindowFlippedY() = 0;
 		virtual bool         IsWindowFlippedX() = 0;
 
-		#ifdef METAFILE_DISABLE_FILESYSTEM
-		bool ReadFromBuffer(BYTE* wchar_t, unsigned int unSize)
+        bool ReadFromBuffer(BYTE* pBuffer, unsigned int unSize)
 		{
 			if (NULL == pBuffer || 0 == unSize)
-				return false
+                return false;
 
 			this->ClearFile();
 
 			m_oStream.SetStream(pBuffer, unSize);
 		}
-		#else
 		bool OpenFromFile(const wchar_t* wsFilePath)
 		{
 			this->Close();
@@ -113,13 +108,11 @@ namespace MetaFile
 
 			return true;
 		}
-		#endif
+
 		void          Close()
 		{
-			#ifdef METAFILE_DISABLE_FILESYSTEM
-			#else
 			RELEASEARRAYOBJECTS(m_pBufferData);
-			#endif
+
 			m_pOutput = NULL;
 			m_oStream.SetStream(NULL, 0);
 			m_bError = false;
@@ -135,17 +128,16 @@ namespace MetaFile
 
 			this->ClearFile();
 		}
-		#ifdef METAFILE_DISABLE_FILESYSTEM
-		#else
-		CFontManager* GetFontManager()
+
+        NSFonts::IFontManager* GetFontManager()
 		{
 			return m_pFontManager;
 		}
-		void          SetFontManager(CFontManager* pFontManager)
+        void          SetFontManager(NSFonts::IFontManager* pFontManager)
 		{
 			m_pFontManager = pFontManager;
 		}
-		#endif
+
 		void          SetOutputDevice(IOutputDevice* pOutput)
 		{
 			m_pOutput = pOutput;
@@ -165,11 +157,7 @@ namespace MetaFile
 		IOutputDevice* m_pOutput;
 
 	private:
-
-		#ifdef METAFILE_DISABLE_FILESYSTEM
-		#else
-		CFontManager*  m_pFontManager;
-		#endif
+        NSFonts::IFontManager*  m_pFontManager;
 
 		BYTE*          m_pBufferData;
 		bool           m_bError;

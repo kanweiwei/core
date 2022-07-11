@@ -432,106 +432,10 @@ namespace MetaFile
 				delete[] pdDx;
 		}
 		else
-		{
-			#ifdef  METAFILE_DISABLE_FILESYSTEM
-			if (pFont)
-			{
-				int lLogicalFontHeight = pFont->GetHeight();
-				if (lLogicalFontHeight < 0)
-					lLogicalFontHeight = -lLogicalFontHeight;
-				if (lLogicalFontHeight < 0.01)
-					lLogicalFontHeight = 18;
-
-				double dFontHeight = lLogicalFontHeight;
-
-				float fL = 0, fT = 0, fW = 0, fH = 0;
-
-				if (NULL != pDx && unCharsCount > 1)
-				{
-					// Тогда мы складываем все pDx кроме последнего символа, последний считаем отдельно
-					double dTempTextW = 0;
-					for (unsigned int unCharIndex = 0; unCharIndex < unCharsCount - 1; unCharIndex++)
-					{
-						dTempTextW += pDx[unCharIndex];
-					}
-
-					dTempTextW += dFontHeight * wsText.length();
-
-					fW = (float)dTempTextW;
-				}
-				else
-				{
-					fW = (float)(dFontHeight * wsText.length());
-				}
-
-				fH = dFontHeight * 1.2;
-
-				double dTheta = -((((double)pFont->GetEscapement()) / 10) * 3.14159265358979323846 / 180);
-				double dCosTheta = (float)cos(dTheta);
-				double dSinTheta = (float)sin(dTheta);
-
-				double dX = (double)nX;
-				double dY = (double)nY;
-
-				// Найдем начальную точку текста
-				unsigned int ulTextAlign = GetTextAlign();
-				if (ulTextAlign & TA_BASELINE)
-				{
-					// Ничего не делаем
-				}
-				else if (ulTextAlign & TA_BOTTOM)
-				{
-					float fTemp = -(-fT + fH);
-
-					dX += -fTemp * dSinTheta;
-					dY +=  fTemp * dCosTheta;
-				}
-				else // if (ulTextAlign & TA_TOP)
-				{
-					float fTemp = -fT;
-
-					dX += -fTemp * dSinTheta;
-					dY +=  fTemp * dCosTheta;
-				}
-
-				if (ulTextAlign & TA_CENTER)
-				{
-					dX += -fW / 2 * dCosTheta;
-					dY += -fW / 2 * dSinTheta;
-				}
-				else if (ulTextAlign & TA_RIGHT)
-				{
-					dX += -fW * dCosTheta;
-					dY += -fW * dSinTheta;
-				}
-				else //if (ulTextAlign & TA_LEFT)
-				{
-					// Ничего не делаем
-				}
-
-				double dX0 = dX + fL, dY0 = dY + fT;
-				double dX1 = dX + fL + fW, dY1 = dY + fT;
-				double dX2 = dX + fL + fW, dY2 = dY + fT + fH;
-				double dX3 = dX + fL, dY3 = dY + fT + fH;
-				if (0 != pFont->GetEscapement())
-				{
-					TXForm oForm(dCosTheta, dSinTheta, -dSinTheta, dCosTheta, dX - dX * dCosTheta + dY * dSinTheta, dY - dX * dSinTheta - dY * dCosTheta);
-
-					oForm.Apply(dX0, dY0);
-					oForm.Apply(dX1, dY1);
-					oForm.Apply(dX2, dY2);
-					oForm.Apply(dX3, dY3);
-				}
-
-				RegisterPoint((short)dX0, (short)dY0);
-				RegisterPoint((short)dX1, (short)dY1);
-				RegisterPoint((short)dX2, (short)dY2);
-				RegisterPoint((short)dX3, (short)dY3);
-			}
-			#else
+        {
 			// TODO: Здесь идет точное повторение кода из CMetaFileRenderer->DrawString
 			//       неплохо бы перенести этот пересчет в базовый класс IMetaFileBase.
-			CFontManager* pFontManager = GetFontManager();
+            NSFonts::IFontManager* pFontManager = GetFontManager();
 			if (pFont && pFontManager)
 			{
 				int lLogicalFontHeight = pFont->GetHeight();
@@ -654,7 +558,6 @@ namespace MetaFile
 				RegisterPoint((short)dX2, (short)dY2);
 				RegisterPoint((short)dX3, (short)dY3);
 			}
-			#endif
 			else
 			{
 				RegisterPoint(nX, nY);

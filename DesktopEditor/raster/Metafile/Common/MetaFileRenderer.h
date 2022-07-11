@@ -328,7 +328,7 @@ namespace MetaFile
 
 			fH = dFontHeight * 1.2;
 			#else
-			CFontManager* pFontManager = m_pFile->GetFontManager();
+            NSFonts::IFontManager* pFontManager = m_pFile->GetFontManager();
 			if (pFontManager)
 			{
 				pFontManager->LoadFontByName(wsFaceName, dFontHeight, lStyle, 72, 72);
@@ -338,10 +338,10 @@ namespace MetaFile
 
 				double dFHeight = dFontHeight;
 				double dFDescent = dFontHeight;
-				if (pFontManager->m_pFont)
+                if (pFontManager->GetFile())
 				{
-				    dFHeight  *= pFontManager->m_pFont->GetHeight() / pFontManager->m_pFont->m_lUnits_Per_Em * dMmToPt;
-				    dFDescent *= pFontManager->m_pFont->GetDescender() / pFontManager->m_pFont->m_lUnits_Per_Em * dMmToPt;
+                    dFHeight  *= pFontManager->GetFile()->GetHeight() / pFontManager->GetFile()->Units_Per_Em() * dMmToPt;
+                    dFDescent *= pFontManager->GetFile()->GetDescender() / pFontManager->GetFile()->Units_Per_Em() * dMmToPt;
 				}
 				double dFAscent  = dFHeight - std::abs(dFDescent);
 

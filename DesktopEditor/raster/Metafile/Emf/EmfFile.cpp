@@ -31,11 +31,7 @@
  */
 
 #include "../../../common/StringExt.h"
-
-#ifdef METAFILE_DISABLE_FILESYSTEM
-#else
-#include "../../../fontengine/FontManager.h"
-#endif
+#include "../../../graphics/pro/Fonts.h"
 
 #include "EmfFile.h"
 

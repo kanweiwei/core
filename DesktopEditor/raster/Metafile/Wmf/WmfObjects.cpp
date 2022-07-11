@@ -71,11 +71,6 @@ namespace MetaFile
 	}
 	void         CWmfBrush::SetDibPattern(unsigned char* pBuffer, unsigned int ulWidth, unsigned int ulHeight)
 	{
-		#ifdef METAFILE_DISABLE_FILESYSTEM
-			// без использования файловой системы пока реализовать не получится при конвертации в растр,
-			// так как на данный момент картинку кисти передать в рендер можно только  с помощью использования файловой системы
-			// (CMetaFileRenderer::UpdateBrush()) m_pRenderer->put_BrushTexturePath(pBrush->GetDibPatterPath());
-		#else
 			FILE *pTempFile = NULL;
 			std::wstring wsTempFileName;
 			if (!OpenTempFile(&wsTempFileName, &pTempFile, L"wb", L".emf0", NULL))
@@ -96,7 +91,6 @@ namespace MetaFile
 			}
 
 			oBgraFrame.put_Data(NULL);
-		#endif
 	}
 	int          CWmfBrush::GetColor()
 	{

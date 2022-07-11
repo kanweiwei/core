@@ -26,11 +26,9 @@ namespace MetaFile
                 CWmfParserBase();
                 ~CWmfParserBase();
 
-                #ifdef  METAFILE_DISABLE_FILESYSTEM
-                virtual bool            ReadFromBuffer(wchar_t*, unsigned int)    = 0;
-                #else
+                virtual bool            ReadFromBuffer(unsigned char*, unsigned int)    = 0;
                 virtual bool            OpenFromFile(const wchar_t*)    = 0;
-                #endif
+
                 virtual void            PlayFile()                      = 0;
                 virtual void            Scan()                          = 0;
 

@@ -6,22 +6,15 @@ namespace MetaFile
         CEmfInterpretator::CEmfInterpretator(const wchar_t* wsFilepath) :
                 unFileSize(0), unNumberRecords(0), ushNuberDescriptors(0)
         {
-                #ifdef METAFILE_DISABLE_FILESYSTEM
-                #else
                 m_pOutStream = new NSFile::CFileBinary();
                 bool result = m_pOutStream->CreateFileW(wsFilepath);
-                #endif
         }
 
         CEmfInterpretator::CEmfInterpretator(const CEmfInterpretator& oEmfInterpretator, const bool bIsLite)
                 : unFileSize(0), unNumberRecords(0), ushNuberDescriptors(0),
                   m_pOutStream(NULL)
         {
-                #ifdef METAFILE_DISABLE_FILESYSTEM
-                m_wsData = oEmfInterpretator.m_wsData;
-                #else
                 m_pOutStream = oEmfInterpretator.m_pOutStream;
-                #endif
 
                 if (!bIsLite)
                 {
@@ -355,11 +348,8 @@ namespace MetaFile
                 unFileSize += unExplicitRecordSize;
                 ++unNumberRecords;
 
-                #ifdef METAFILE_DISABLE_FILESYSTEM
-                #else
                 m_pOutStream->WriteFile((BYTE*)&unType,                sizeof (int));
-                m_pOutStream->WriteFile((BYTE*)&unExplicitRecordSize,  sizeof (int));\
-                #endif
+                m_pOutStream->WriteFile((BYTE*)&unExplicitRecordSize,  sizeof (int));
         }
 
         void CEmfInterpretator::HANDLE_EMR_RESTOREDC(const int &nIndexDC)
@@ -370,13 +360,10 @@ namespace MetaFile
                 unFileSize += unExplicitRecordSize;
                 ++unNumberRecords;
 
-                #ifdef METAFILE_DISABLE_FILESYSTEM
-                #else
                 m_pOutStream->WriteFile((BYTE*)&unType,                sizeof (int));
                 m_pOutStream->WriteFile((BYTE*)&unExplicitRecordSize,  sizeof (int));
 
                 m_pOutStream->WriteFile((BYTE*)&nIndexDC,              sizeof (int));
-                #endif
         }
 
         void CEmfInterpretator::HANDLE_EMR_MODIFYWORLDTRANSFORM(const TXForm &oXForm, const unsigned int &unMode)
