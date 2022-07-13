@@ -43,6 +43,7 @@
 #include "Image.h"
 #include "Font14.h"
 #include "FontCidTT.h"
+#include "FontTT.h"
 #include "Shading.h"
 #include "Pattern.h"
 #include "AcroForm.h"
@@ -54,6 +55,11 @@
 
 #ifdef CreateFont
 #undef CreateFont
+#endif
+
+#ifndef VALUE2STR
+#define VALUE_TO_STRING(x) #x
+#define VALUE2STR(x) VALUE_TO_STRING(x)
 #endif
 
 namespace PdfWriter
@@ -83,6 +89,7 @@ namespace PdfWriter
 		m_pFreeTypeLibrary  = NULL;
 		m_pAcroForm         = NULL;
 		m_pFieldsResources  = NULL;
+		m_pDefaultCheckBoxFont = NULL;
 
 		m_bPDFAConformance	= false;
 	}
@@ -118,11 +125,18 @@ namespace PdfWriter
 			return false;
 
 		m_pInfo->SetCreationTime();
-		std::wstring sApplication = NSSystemUtils::GetEnvVariable(NSSystemUtils::gc_EnvCompanyName);
-		if (sApplication.empty())
-			sApplication = NSSystemUtils::gc_EnvCompanyNameDefault;
-		std::string sApplicationA = NSFile::CUtf8Converter::GetUtf8StringFromUnicode(sApplication);
-		m_pInfo->SetInfo(InfoProducer, sApplicationA.c_str());
+		std::wstring sCreator = NSSystemUtils::GetEnvVariable(NSSystemUtils::gc_EnvApplicationName);
+		if (sCreator.empty())
+			sCreator = NSSystemUtils::gc_EnvApplicationNameDefault;
+		std::string sCreatorA = NSFile::CUtf8Converter::GetUtf8StringFromUnicode(sCreator);
+
+#if defined(INTVER)
+        std::string sVersion = VALUE2STR(INTVER);
+        sCreatorA += ("/" + sVersion);
+#endif
+
+		m_pInfo->SetInfo(InfoProducer, sCreatorA.c_str());
+		m_pInfo->SetInfo(InfoCreator, sCreatorA.c_str());
 
 		CMetadata* pMetadata = m_pCatalog->AddMetadata(m_pXref, m_pInfo);
 		if (IsPDFA())
@@ -174,12 +188,14 @@ namespace PdfWriter
 		m_pAcroForm         = NULL;
 		m_pFieldsResources  = NULL;
 		memset((void*)m_sTTFontTag, 0x00, 8);
+		m_pDefaultCheckBoxFont = NULL;
 
 		m_vPages.clear();
 		m_vExtGrStates.clear();
 		m_vStrokeAlpha.clear();
 		m_vFillAlpha.clear();
 		m_vShadings.clear();
+		m_vCidTTFonts.clear();
 		m_vTTFonts.clear();
 		m_vFreeTypeFonts.clear();
 		if (m_pFreeTypeLibrary)
@@ -311,6 +327,10 @@ namespace PdfWriter
     void CDocument::SetCompressionMode(unsigned int unMode)
 	{
 		m_unCompressMode = unMode;
+	}
+	unsigned int CDocument::GetCompressionMode() const
+	{
+		return m_unCompressMode;
 	}
 	void CDocument::SetPDFAConformanceMode(bool isPDFA)
 	{
@@ -547,16 +567,13 @@ namespace PdfWriter
 	{
 		return new CFont14(m_pXref, this, eType);
 	}
-	CFontCidTrueType* CDocument::CreateTrueTypeFont(const std::wstring& wsFontPath, unsigned int unIndex)
+	CFontCidTrueType* CDocument::CreateCidTrueTypeFont(const std::wstring& wsFontPath, unsigned int unIndex)
 	{
-		for (int nIndex = 0, nCount = m_vTTFonts.size(); nIndex < nCount; nIndex++)
-		{
-			TFontInfo& oInfo = m_vTTFonts.at(nIndex);
-			if (wsFontPath == oInfo.wsPath && unIndex == oInfo.unIndex)
-				return oInfo.pFont;
-		}
+		CFontCidTrueType* pFont = FindCidTrueTypeFont(wsFontPath, unIndex);
+		if (pFont)
+			return pFont;
 
-		CFontCidTrueType* pFont = new CFontCidTrueType(m_pXref, this, wsFontPath, unIndex);
+		pFont = new CFontCidTrueType(m_pXref, this, wsFontPath, unIndex);
 		if (!pFont)
 			return NULL;
 
@@ -566,10 +583,57 @@ namespace PdfWriter
 		if (pString)
 			delete pString;
 
+		m_vCidTTFonts.push_back(TFontInfo(wsFontPath, unIndex, pFont));
+		return pFont;
+	}
+	CFontCidTrueType* CDocument::FindCidTrueTypeFont(const std::wstring &wsFontPath, unsigned int unIndex)
+	{
+		for (int nIndex = 0, nCount = m_vCidTTFonts.size(); nIndex < nCount; nIndex++)
+		{
+			TFontInfo& oInfo = m_vCidTTFonts.at(nIndex);
+			if (wsFontPath == oInfo.wsPath && unIndex == oInfo.unIndex)
+				return (CFontCidTrueType*)oInfo.pFont;
+		}
+
+		return NULL;
+	}
+	CFontTrueType* CDocument::CreateTrueTypeFont(const std::wstring& wsFontPath, unsigned int unIndex)
+	{
+		for (int nIndex = 0, nCount = m_vTTFonts.size(); nIndex < nCount; nIndex++)
+		{
+			TFontInfo& oInfo = m_vTTFonts.at(nIndex);
+			if (wsFontPath == oInfo.wsPath && unIndex == oInfo.unIndex)
+				return (CFontTrueType*)oInfo.pFont;
+		}
+
+		CFontTrueType* pFont = new CFontTrueType(m_pXref, this, wsFontPath, unIndex);
+		if (!pFont)
+			return NULL;
+
 		m_vTTFonts.push_back(TFontInfo(wsFontPath, unIndex, pFont));
 		return pFont;
 	}
-    char* CDocument::GetTTFontTag()
+	CFontTrueType* CDocument::CreateTrueTypeFont(CFontCidTrueType* pCidFont)
+	{
+		for (int nIndex = 0, nCount = m_vCidTTFonts.size(); nIndex < nCount; nIndex++)
+		{
+			TFontInfo& oInfo = m_vCidTTFonts.at(nIndex);
+			if (pCidFont == (CFontCidTrueType*)oInfo.pFont)
+			{
+				return CreateTrueTypeFont(oInfo.wsPath, oInfo.unIndex);
+			}
+		}
+
+		return NULL;
+	}
+	CFont14* CDocument::GetDefaultCheckboxFont()
+	{
+		if (!m_pDefaultCheckBoxFont)
+			m_pDefaultCheckBoxFont = new CFont14(m_pXref, this, EStandard14Fonts::standard14fonts_ZapfDingbats);
+
+		return m_pDefaultCheckBoxFont;
+	}
+	char* CDocument::GetTTFontTag()
 	{
 		if (0 == m_sTTFontTag[0])
 		{
@@ -826,7 +890,13 @@ namespace PdfWriter
 	CResourcesDict* CDocument::GetFieldsResources()
 	{
 		if (!m_pFieldsResources)
+		{
+			if (!CheckAcroForm())
+				return NULL;
+			
 			m_pFieldsResources = new CResourcesDict(m_pXref, false, true);
+			m_pAcroForm->Add("DR", m_pFieldsResources);
+		}
 
 		return m_pFieldsResources;
 	}
@@ -919,6 +989,63 @@ namespace PdfWriter
 		ppFields->Add(pField);
 
 		return pField;
+	}
+	bool CDocument::CheckFieldName(CFieldBase* pField, const std::string& sName)
+	{
+		CFieldBase* pBase = m_mFields[sName];
+		if (pBase)
+		{
+			if (!pBase->GetKidsCount())
+			{
+				CFieldBase* pParent = new CFieldBase(m_pXref, this);
+				pParent->SetFieldName(sName, true);
+				pParent->Add("Ff", pBase->GetFieldFlag());
+				pParent->Add("FT", pBase->GetFieldType());
+
+
+				pBase->SetParent(pParent);
+				pBase->ClearKidRecords();
+				pParent->AddKid(pBase);
+
+				m_mFields[sName] = pParent;
+				pField->ClearKidRecords();
+				pField->SetParent(pParent);
+				pParent->AddKid(pField);
+
+				CChoiceField* pChoice = dynamic_cast<CChoiceField*>(pBase);
+				if (pChoice)
+					pChoice->UpdateSelectedIndexToParent();
+
+				CTextField* pTextField = dynamic_cast<CTextField*>(pBase);
+				int nMaxLen = 0;
+				if (pTextField && 0 != (nMaxLen = pTextField->GetMaxLen()))
+				{
+					pBase->Remove("MaxLen");
+					pParent->Add("MaxLen", nMaxLen);
+				}
+
+				pParent->UpdateKidsPlaceHolder();
+			}
+			else
+			{
+				pField->ClearKidRecords();
+				pField->SetParent(pBase);
+				pBase->AddKid(pField);
+
+				CChoiceField* pChoice = dynamic_cast<CChoiceField*>(pBase);
+				if (pChoice)
+					pChoice->UpdateSelectedIndexToParent();
+
+				pBase->UpdateKidsPlaceHolder();
+			}
+
+			return true;
+		}
+		else
+		{
+			m_mFields[sName] = pField;
+			return false;
+		}
 	}
 	bool CDocument::CheckAcroForm()
 	{

@@ -33,14 +33,12 @@
 #include <iostream>
 #include "style_table_properties.h"
 
-#include <xml/attributes.h>
-#include <xml/simple_xml_writer.h>
+#include "../../include/xml/simple_xml_writer.h"
 
 #include "serialize_elements.h"
 #include "datatypes/borderstyle.h"
 #include "odfcontext.h"
 #include "odf_document_impl.h"
-
 
 
 namespace cpdoccore { 
@@ -115,9 +113,8 @@ void table_format_properties::docx_convert(oox::docx_conversion_context & Contex
 
     if (common_break_attlist_.fo_break_before_)
     {
-        if (common_break_attlist_.fo_break_before_->get_type()  == fo_break::Page)
-            Context.set_page_break_before(true);
-    }
+		Context.set_page_break_before(common_break_attlist_.fo_break_before_->get_type());
+	}
 
     if (table_align_)
     {

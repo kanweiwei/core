@@ -160,9 +160,6 @@ IMetafileToRenderter::~IMetafileToRenderter()
     RELEASEOBJECT(pPicker);
     m_pPicker = NULL;
 }
-void IMetafileToRenderter::EnableBrushRect(bool bValue)
-{
-}
 void IMetafileToRenderter::SetLinearGradiant(const double& x0, const double& y0, const double& x1, const double& y1)
 {
     double dAngle = 0;
@@ -329,6 +326,8 @@ namespace NSOnlineOfficeBinToPdf
 		bool bIsPathOpened = false;
 		int curindex = 0;
 
+        bool bIsEnableBrushRect = false;
+
 		BYTE* current = pBuffer;
 		while (curindex < lBufferLen)
 		{
@@ -407,18 +406,6 @@ namespace NSOnlineOfficeBinToPdf
 							pDash[nDash] = ReadInt(current, curindex) / 100000.0;
 						}
 
-						if (c_nGrRenderer == lRendererType)
-						{
-							for (int nDash = 0; nDash < nCountDash; ++nDash)
-							{
-								// в отрисовщике - баг. зачем-то умножается на коеф 25.4/dpi
-								// чтобы не менять там (перед выпуском) - умножаю здесь на обратку
-								double dDpiX = 0;
-								pRenderer->get_DpiX(&dDpiX);
-								pDash[nDash] *= (dDpiX / 25.4);
-							}
-						}
-
                         pRenderer->PenDashPattern(pDash, nCountDash);
                         delete[] pDash;
 					}
@@ -472,13 +459,15 @@ namespace NSOnlineOfficeBinToPdf
 				double m2 = ReadInt(current, curindex) / 100000.0;
 				double m3 = ReadInt(current, curindex) / 100000.0;
 				double m4 = ReadInt(current, curindex) / 100000.0;
-				pRenderer->BrushRect(0, m1, m2, m3, m4);
+                pRenderer->BrushRect(bIsEnableBrushRect ? 1 : 0, m1, m2, m3, m4);
 				break;
 			}
 			case ctBrushRectableEnabled:
 			{
-				bool bEnable = (1 == *current) ? true : false;
-				pCorrector->EnableBrushRect(bEnable);
+                bIsEnableBrushRect = (1 == *current) ? true : false;
+
+                if (!bIsEnableBrushRect)
+                    pRenderer->BrushRect(bIsEnableBrushRect ? 1 : 0, 0, 0, 1, 1);
 
 				current += 1;
 				curindex += 1;
@@ -913,47 +902,83 @@ namespace NSOnlineOfficeBinToPdf
 					oInfo.SetBorder(nBorderType, dBorderSize, unR, unG, unB, unA);
 				}
 
+				if (nFlags & (1 << 9))
+				{
+					unsigned char unR = ReadByte(current, curindex);
+					unsigned char unG = ReadByte(current, curindex);
+					unsigned char unB = ReadByte(current, curindex);
+					unsigned char unA = ReadByte(current, curindex);
+					oInfo.SetShd(unR, unG, unB, unA);
+				}
+
+				if (nFlags & (1 << 10))
+				{
+					oInfo.SetJc(ReadByte(current, curindex));
+				}
+
 				oInfo.SetType(ReadInt(current, curindex));
 
 				if (oInfo.IsTextField())
 				{
-					oInfo.SetComb(nFlags & (1 << 20));
+					CFormFieldInfo::CTextFormPr* pPr = oInfo.GetTextFormPr();
+					pPr->SetComb(nFlags & (1 << 20));
 
 					if (nFlags & (1 << 21))
-						oInfo.SetMaxCharacters(ReadInt(current, curindex));
+						pPr->SetMaxCharacters(ReadInt(current, curindex));
 
 					if (nFlags & (1 << 22))
-						oInfo.SetTextValue(ReadString(current, curindex));
+						pPr->SetTextValue(ReadString(current, curindex));
+
+					pPr->SetMultiLine(nFlags & (1 << 23));
+					pPr->SetAutoFit(nFlags & (1 << 24));
+
+					if (nFlags & (1 << 25))
+						pPr->SetPlaceHolder(ReadString(current, curindex));
 				}
-				else if (oInfo.IsComboBox())
+				else if (oInfo.IsDropDownList())
 				{
-					oInfo.SetEditComboBox(nFlags & (1 << 20));
+					CFormFieldInfo::CDropDownFormPr* pPr = oInfo.GetDropDownFormPr();
+					pPr->SetEditComboBox(nFlags & (1 << 20));
 
 					int nItemsCount = ReadInt(current, curindex);
 					for (int nIndex = 0; nIndex < nItemsCount; ++nIndex)
 					{
-						oInfo.AddComboBoxItem(ReadString(current, curindex));
+						pPr->AddComboBoxItem(ReadString(current, curindex));
 					}
 
 					int nSelectedIndex = ReadInt(current, curindex);
 
 					if (nFlags & (1 << 22))
-						oInfo.SetTextValue(ReadString(current, curindex));
+						pPr->SetTextValue(ReadString(current, curindex));
+
+					if (nFlags & (1 << 23))
+						pPr->SetPlaceHolder(ReadString(current, curindex));
 				}
 				else if (oInfo.IsCheckBox())
 				{
-					oInfo.SetChecked(nFlags & (1 << 20));
-					oInfo.SetCheckedSymbol(ReadInt(current, curindex));
-					oInfo.SetCheckedFont(ReadString(current, curindex));
-					oInfo.SetUncheckedSymbol(ReadInt(current, curindex));
-					oInfo.SetUncheckedFont(ReadString(current, curindex));
+					CFormFieldInfo::CCheckBoxFormPr* pPr = oInfo.GetCheckBoxFormPr();
+					pPr->SetChecked(nFlags & (1 << 20));
+					pPr->SetType(ReadInt(current, curindex));
+					pPr->SetCheckedSymbol(ReadInt(current, curindex));
+					pPr->SetCheckedFont(ReadString(current, curindex));
+					pPr->SetUncheckedSymbol(ReadInt(current, curindex));
+					pPr->SetUncheckedFont(ReadString(current, curindex));
 
 					if (nFlags & (1 << 21))
-						oInfo.SetGroupKey(ReadString(current, curindex));
+						pPr->SetGroupKey(ReadString(current, curindex));
 				}
 				else if (oInfo.IsPicture())
 				{
+					CFormFieldInfo::CPictureFormPr* pPr = oInfo.GetPictureFormPr();
+					pPr->SetConstantProportions(nFlags & (1 << 20));
+					pPr->SetRespectBorders(nFlags & (1 << 21));
+					pPr->SetScaleType(CFormFieldInfo::EScaleType((nFlags >> 24) & 0xF));
+					LONG lShiftX = ReadInt(current, curindex);
+					LONG lShiftY = ReadInt(current, curindex);
+					pPr->SetShift(lShiftX, lShiftY);
 
+					if (nFlags & (1 << 22))
+						pPr->SetPicturePath(pCorrector->GetImagePath(ReadString(current, curindex)));
 				}
 
 				if (oInfo.IsValid())

@@ -32,9 +32,9 @@
 
 #include <iostream>
 
-#include <xml/utils.h>
-#include <odf/odf_document.h>
-#include <xml/simple_xml_writer.h>
+#include "../../include/xml/utils.h"
+#include "../../include/odf/odf_document.h"
+#include "../../include/xml/simple_xml_writer.h"
 
 #include "docx_conversion_context.h"
 
@@ -49,7 +49,7 @@
 #include "docx_package.h"
 #include "xlsx_package.h"
 #include "oox_rels.h"
-#include "logging.h"
+#include "../../include/logging.h"
 
 #include "../../../DesktopEditor/graphics/pro/Fonts.h"
 #include "../../../Common/DocxFormat/Source/XML/Utils.h"
@@ -1210,7 +1210,7 @@ void docx_conversion_context::start_process_style_content()
     styles_context_.start();
 }
 
-void docx_conversion_context::process_section(std::wostream & strm, odf_reader::style_columns * columns)//from page layout
+void docx_conversion_context::process_section(std::wostream & strm, odf_reader::style_columns *columns_page)//from page layout
 {
 	if (root()->odf_context().pageLayoutContainer().linenumbering())
 	{
@@ -1222,7 +1222,8 @@ void docx_conversion_context::process_section(std::wostream & strm, odf_reader::
 
 	oox::section_context::_section & section = get_section_context().get_last();
 
-	if (!columns)
+	odf_reader::style_columns *columns = columns_page;
+	//if (!columns)
 	{
 		if (const odf_reader::style_instance * secStyle = root()->odf_context().styleContainer().style_by_name(section.style_, odf_types::style_family::Section, process_headers_footers_))
 		{
@@ -1279,20 +1280,35 @@ void docx_conversion_context::process_section(std::wostream & strm, odf_reader::
 			}		
 			for (size_t i = 0; page_width > 0, i < columns->style_columns_.size(); i++)
 			{
-				odf_reader::style_column * col = dynamic_cast<odf_reader::style_column*>( columns->style_columns_[i].get());
+				odf_reader::style_column *col = dynamic_cast<odf_reader::style_column*>( columns->style_columns_[i].get());
 				if (!col) continue;
 
-				double width = page_width * (col->style_rel_width_ ? col->style_rel_width_->get_value() / 65535. : 0);
-
-				double space = col->fo_end_indent_ ? col->fo_end_indent_->get_value_unit(odf_types::length::pt) : 0;
-
-				if (i < columns->style_columns_.size() - 1)
+				double percent = col->style_rel_width_ ? col->style_rel_width_->get_value() : 0;
+				if (percent > 0x7FFE)
 				{
-					col = dynamic_cast<odf_reader::style_column*>( columns->style_columns_[i + 1].get());
-					space += col->fo_start_indent_ ? col->fo_start_indent_->get_value_unit(odf_types::length::pt) : 0;
+					//auto
+					break;
 				}
-				
-				width_space.push_back(std::make_pair(width, space));
+				else
+				{
+					if (percent > 1000.) percent /= 100.;
+
+					double width = page_width * percent / 100.;
+
+					double space_end = col->fo_end_indent_ ? col->fo_end_indent_->get_value_unit(odf_types::length::pt) : 0;
+					double space_start = col->fo_start_indent_ ? col->fo_start_indent_->get_value_unit(odf_types::length::pt) : 0;
+
+					width -= space_end;
+					width -= space_start;
+
+					if (i < columns->style_columns_.size() - 1)
+					{
+						col = dynamic_cast<odf_reader::style_column*>(columns->style_columns_[i + 1].get());
+						space_start = col->fo_start_indent_ ? col->fo_start_indent_->get_value_unit(odf_types::length::pt) : 0;
+					}
+
+					width_space.push_back(std::make_pair(width, space_start + space_end));
+				}
 			}
 		}
 	}
@@ -1467,12 +1483,12 @@ odf_reader::style_text_properties_ptr docx_conversion_context::current_text_prop
     return cur;
 }
 
-void docx_conversion_context::set_page_break_after(bool val)
+void docx_conversion_context::set_page_break_after(int val)
 {
     page_break_after_ = val;
 }
 
-bool docx_conversion_context::get_page_break_after()
+int docx_conversion_context::get_page_break_after()
 {
     return page_break_after_ ;
 }
@@ -1484,12 +1500,12 @@ bool docx_conversion_context::get_page_break()
 {
     return page_break_;
 }
-void docx_conversion_context::set_page_break_before(bool val)
+void docx_conversion_context::set_page_break_before(int val)
 {
     page_break_before_ = val;
 }
 
-bool docx_conversion_context::get_page_break_before()
+int docx_conversion_context::get_page_break_before()
 {
     return page_break_before_;
 }
@@ -1937,15 +1953,8 @@ void docx_conversion_context::process_page_break_after(const odf_reader::style_i
                 _CP_OPT(odf_types::fo_break) fo_break_val = inst->content()->get_style_paragraph_properties()->content_.fo_break_after_;
                 if (fo_break_val)
                 {
-					if (fo_break_val->get_type() == odf_types::fo_break::Page)
-                    {
-                        set_page_break_after(true);     
-                        break;
-                    }
-                    else if (fo_break_val->get_type() == odf_types::fo_break::Auto)
-                    {
-                        break;                    
-                    }
+					set_page_break_after(fo_break_val->get_type());
+					break;
                 }
             }
             inst = inst->parent();
@@ -2185,35 +2194,42 @@ void docx_conversion_context::start_text_changes (const std::wstring &id)
 	
 	map_current_changes_.insert(std::pair<std::wstring, text_tracked_context::_state> (id, state_add));
 
-	if (state_.in_paragraph_ && ( state_add.type == 1 || state_add.type == 2 ))
+	if ( state_add.type == 1 || state_add.type == 2 )
 	{
 		map_changes_iterator it = map_current_changes_.find(id);
 		text_tracked_context::_state  &state = it->second;
-		
-		std::wstring format_change =	L" w:date=\""	+ state.date	+ L"\"" +
-										L" w:author=\""	+ state.author	+ L"\"" ;
 
-		finish_run();
-		state.active		= true;
-		state.in_drawing	= get_drawing_state_content();
-		
-		if (state.type	== 1)
+		if (state_.in_paragraph_)
 		{
+			std::wstring format_change = L" w:date=\"" + state.date + L"\"" +
+				L" w:author=\"" + state.author + L"\"";
 
-			output_stream() << L"<w:ins" << format_change << L" w:id=\"" << std::to_wstring(current_id_changes++) <<  L"\">";
-		}
-		
-		if (state.type	== 2)
-		{
-			for (size_t i = 0 ; i < state.content.size(); i++)
+			finish_run();
+			state.active = true;
+			state.in_drawing = get_drawing_state_content();
+
+			if (state.type == 1)
 			{
-				output_stream() << L"<w:del" << format_change << L" w:id=\"" << std::to_wstring(current_id_changes++) <<  L"\">";
-
-				output_stream() << state.content[i];
-
-				output_stream() << L"</w:del>";
+				output_stream() << L"<w:ins" << format_change << L" w:id=\"" << std::to_wstring(current_id_changes++) << L"\">";
 			}
-			map_current_changes_.erase(it);
+
+			if (state.type == 2)
+			{
+				for (size_t i = 0; i < state.content.size(); i++)
+				{
+					output_stream() << L"<w:del" << format_change << L" w:id=\"" << std::to_wstring(current_id_changes++) << L"\">";
+
+					output_stream() << state.content[i];
+
+					output_stream() << L"</w:del>";
+				}
+				map_current_changes_.erase(it);
+			}
+		}
+		else
+		{
+			state.in_drawing = get_drawing_state_content();
+			state.out_active = true;
 		}
 	}
 }
@@ -2240,87 +2256,104 @@ void docx_conversion_context::start_changes()
 		change_attr += L" w:date=\"" + state.date + L"\"";
 		change_attr += L" w:author=\"" + state.author + L"\"";
 		change_attr += L" w:id=\"" + std::to_wstring(current_id_changes++) + L"\"";
-
-		if (state.type == 1)
+		
+		if (state.out_active)
 		{
-			text_tracked_context_.dumpRPrInsDel_ = L"<w:ins" + change_attr + L"/>";
-		}
-
-		if (state.type == 2)
-		{
-			text_tracked_context_.dumpRPrInsDel_ = L"<w:del" + change_attr + L"/>";
-		}
-
-		if (state.type == 3 && false == state.style_name.empty())
-		{
-			odf_reader::style_instance * styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Paragraph, false);
-			if (styleInst)
+			if (state.type == 1)
 			{
-				odf_reader::style_paragraph_properties	* props = styleInst->content()->get_style_paragraph_properties();
-				odf_reader::style_text_properties		* props_text = styleInst->content()->get_style_text_properties();
-
-				text_tracked_context_.dumpPPr_ += L"<w:pPrChange" + change_attr;
-
-				if (props)
-				{
-					props->docx_convert(*this);
-					text_tracked_context_.dumpPPr_ += get_styles_context().paragraph_attr().str();
-				}
-				text_tracked_context_.dumpPPr_ += L">";
-
-				if (props)	text_tracked_context_.dumpPPr_ += get_styles_context().paragraph_nodes().str();
-				if (props_text)
-				{
-					props_text->docx_convert(*this);
-
-					text_tracked_context_.dumpPPr_ += L"<w:rPr>";
-					text_tracked_context_.dumpPPr_ += get_styles_context().text_style().str();
-					text_tracked_context_.dumpPPr_ += L"</w:rPr>";
-				}
-				text_tracked_context_.dumpPPr_ += L"</w:pPrChange>";
+				output_stream() << L"<w:ins" + change_attr + L">";
+				state.active = true;
 			}
-			else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Text, false))
+
+			if (state.type == 2)
 			{
-				text_tracked_context_.dumpRPr_ = L"<w:rPrChange" + change_attr + L">";
-				odf_reader::style_text_properties * props = NULL;
-				props = styleInst->content()->get_style_text_properties();
-				if (props)
-				{
-					props->docx_convert(*this);
-					text_tracked_context_.dumpRPr_ += get_styles_context().text_style().str();
-				}
-				text_tracked_context_.dumpRPr_ += L"</w:rPrChange>";
-			}
-			else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Table, false))
-			{
-				text_tracked_context_.dumpTblPr_ = L"<w:TblPrChange" + change_attr + L">";
-				odf_reader::style_table_properties		* props = styleInst->content()->get_style_table_properties();
-				odf_reader::style_table_cell_properties * props_cell = styleInst->content()->get_style_table_cell_properties();
-				if (props)
-				{
-					props->docx_convert(*this);
-					text_tracked_context_.dumpTblPr_ += get_styles_context().table_style().str();
-				}
-				text_tracked_context_.dumpTblPr_ += L"</w:TblPrChange>";
-			}
-			else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::TableCell, false))
-			{
-				text_tracked_context_.dumpTcPr_ = L"<w:TcPrChange" + change_attr + L">";
-				odf_reader::style_table_cell_properties * props = styleInst->content()->get_style_table_cell_properties();
-				if (props)
-				{
-					props->docx_convert(*this);
-					text_tracked_context_.dumpTcPr_ += get_styles_context().table_style().str();
-				}
-				text_tracked_context_.dumpTcPr_ += L"</w:TcPrChange>";
+				output_stream() << L"<w:del" + change_attr + L">";
+				state.active = true;
 			}
 		}
-		else if (state.type == 3 && state.style_name.empty())
+		else
 		{
-			if (state_.in_run_)
-				text_tracked_context_.dumpRPr_ += L"<w:rPrChange" + change_attr + L"/>";
-			else
-				text_tracked_context_.dumpPPr_ += L"<w:pPrChange" + change_attr + L"/>";
+			if (state.type == 1)
+			{
+				text_tracked_context_.dumpRPrInsDel_ = L"<w:ins" + change_attr + L"/>";
+			}
+
+			if (state.type == 2)
+			{
+				text_tracked_context_.dumpRPrInsDel_ = L"<w:del" + change_attr + L"/>";
+			}
+
+			if (state.type == 3 && false == state.style_name.empty())
+			{
+				odf_reader::style_instance * styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Paragraph, false);
+				if (styleInst)
+				{
+					odf_reader::style_paragraph_properties	* props = styleInst->content()->get_style_paragraph_properties();
+					odf_reader::style_text_properties		* props_text = styleInst->content()->get_style_text_properties();
+
+					text_tracked_context_.dumpPPr_ += L"<w:pPrChange" + change_attr;
+
+					if (props)
+					{
+						props->docx_convert(*this);
+						text_tracked_context_.dumpPPr_ += get_styles_context().paragraph_attr().str();
+					}
+					text_tracked_context_.dumpPPr_ += L">";
+
+					if (props)	text_tracked_context_.dumpPPr_ += get_styles_context().paragraph_nodes().str();
+					if (props_text)
+					{
+						props_text->docx_convert(*this);
+
+						text_tracked_context_.dumpPPr_ += L"<w:rPr>";
+						text_tracked_context_.dumpPPr_ += get_styles_context().text_style().str();
+						text_tracked_context_.dumpPPr_ += L"</w:rPr>";
+					}
+					text_tracked_context_.dumpPPr_ += L"</w:pPrChange>";
+				}
+				else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Text, false))
+				{
+					text_tracked_context_.dumpRPr_ = L"<w:rPrChange" + change_attr + L">";
+					odf_reader::style_text_properties * props = NULL;
+					props = styleInst->content()->get_style_text_properties();
+					if (props)
+					{
+						props->docx_convert(*this);
+						text_tracked_context_.dumpRPr_ += get_styles_context().text_style().str();
+					}
+					text_tracked_context_.dumpRPr_ += L"</w:rPrChange>";
+				}
+				else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::Table, false))
+				{
+					text_tracked_context_.dumpTblPr_ = L"<w:TblPrChange" + change_attr + L">";
+					odf_reader::style_table_properties		* props = styleInst->content()->get_style_table_properties();
+					odf_reader::style_table_cell_properties * props_cell = styleInst->content()->get_style_table_cell_properties();
+					if (props)
+					{
+						props->docx_convert(*this);
+						text_tracked_context_.dumpTblPr_ += get_styles_context().table_style().str();
+					}
+					text_tracked_context_.dumpTblPr_ += L"</w:TblPrChange>";
+				}
+				else if (styleInst = root()->odf_context().styleContainer().style_by_name(state.style_name, odf_types::style_family::TableCell, false))
+				{
+					text_tracked_context_.dumpTcPr_ = L"<w:TcPrChange" + change_attr + L">";
+					odf_reader::style_table_cell_properties * props = styleInst->content()->get_style_table_cell_properties();
+					if (props)
+					{
+						props->docx_convert(*this);
+						text_tracked_context_.dumpTcPr_ += get_styles_context().table_style().str();
+					}
+					text_tracked_context_.dumpTcPr_ += L"</w:TcPrChange>";
+				}
+			}
+			else if (state.type == 3 && state.style_name.empty())
+			{
+				if (state_.in_run_)
+					text_tracked_context_.dumpRPr_ += L"<w:rPrChange" + change_attr + L"/>";
+				else
+					text_tracked_context_.dumpPPr_ += L"<w:pPrChange" + change_attr + L"/>";
+			}
 		}
 	}
 }

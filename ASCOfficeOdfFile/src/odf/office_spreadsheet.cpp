@@ -32,8 +32,7 @@
 
 #include "office_spreadsheet.h"
 
-#include <xml/xmlchar.h>
-#include <xml/attributes.h>
+#include "../../include/xml/xmlchar.h"
 
 #include "serialize_elements.h"
 
@@ -44,6 +43,13 @@ namespace odf_reader {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 const wchar_t * office_spreadsheet::ns = L"office";
 const wchar_t * office_spreadsheet::name = L"spreadsheet";
+
+void office_spreadsheet::add_attributes(const xml::attributes_wc_ptr & Attributes)
+{
+	CP_APPLY_ATTR(L"table:structure-protected", table_structure_protected_);
+	CP_APPLY_ATTR(L"table:protection-key", table_protection_key_);
+	CP_APPLY_ATTR(L"table:protection-key-digest-algorithm", table_protection_key_digest_algorithm_);
+}
 
 void office_spreadsheet::add_child_element( xml::sax * Reader, const std::wstring & Ns, const std::wstring & Name)
 {
@@ -98,6 +104,10 @@ void office_spreadsheet::xlsx_convert(oox::xlsx_conversion_context & Context)
     Context.start_office_spreadsheet(this);
     _CP_LOG << L"[info][xlsx] process spreadsheet (" << content_.size() << L" tables)" << std::endl;
    
+	if (table_structure_protected_)
+	{
+		Context.set_table_structure_protected(*table_structure_protected_);
+	}
 	if (user_fields_)
 		user_fields_->xlsx_convert(Context);
 

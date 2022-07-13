@@ -52,6 +52,7 @@ namespace PdfWriter
 	class CDocument;
 	class CPage;
 	class CFontCidTrueType;
+	class CFontTrueType;
 	class CImageDict;
 	class CShading;
 	class CExtGrState;
@@ -241,21 +242,9 @@ private:
 	void UpdateTransform();
 	void UpdatePen();
 	void UpdateBrush();
-	bool IsValid()
-	{
-            return m_bValid;
-	}
-	bool IsPageValid()
-	{
-            if (!IsValid() || !m_pPage)
-                return false;
-
-            return true;
-	}
-	void SetError()
-	{
-            m_bValid = false;;
-	}
+    bool IsValid();
+    bool IsPageValid();
+    void SetError();
 	void AddLink(const unsigned int& unPage, const double& dX, const double& dY, const double& dW, const double& dH, const double& dDestX, const double& dDestY, const unsigned int& unDestPage);
 
 
@@ -532,6 +521,79 @@ private:
 	};
 	class CBrushState
 	{
+    public:
+        struct TColorAndPoint
+        {
+            TColorAndPoint()
+            {
+                lColor = 0;
+                dPoint = 0;
+                bUse   = false;
+            }
+            TColorAndPoint(const LONG& color, const double& point)
+            {
+                lColor = color;
+                dPoint = point;
+                bUse   = true;
+            }
+
+            static bool Compare(const TColorAndPoint& oFirst, const TColorAndPoint& oSecond)
+            {
+                return (oFirst.dPoint < oSecond.dPoint);
+            }
+            static LONG GetLinearApprox(const TColorAndPoint& oPoint1, const TColorAndPoint& oPoint2, const double& dDstPoint)
+            {
+                double dPoint1 = oPoint1.dPoint;
+                double dPoint2 = oPoint2.dPoint;
+                LONG lColor1 = oPoint1.lColor;
+                LONG lColor2 = oPoint2.lColor;
+
+                double dDiff = dPoint2 - dPoint1;
+                if (fabs(dDiff) < 0)
+                    return lColor1;
+
+                TColor oColor1 = lColor1;
+                TColor oColor2 = lColor2;
+
+                BYTE r = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.r + (oColor2.r - oColor1.r) / dDiff * (dDstPoint - dPoint1))));
+                BYTE g = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.g + (oColor2.g - oColor1.g) / dDiff * (dDstPoint - dPoint1))));
+                BYTE b = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.b + (oColor2.b - oColor1.b) / dDiff * (dDstPoint - dPoint1))));
+                BYTE a = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.a + (oColor2.a - oColor1.a) / dDiff * (dDstPoint - dPoint1))));
+
+                TColor oResColor;
+                oResColor.Set(r, g, b, a);
+                return oResColor.lColor;
+            }
+
+            LONG   lColor;
+            double dPoint;
+            bool   bUse;
+        };
+        struct TBrushRect
+        {
+            TBrushRect()
+            {
+                Reset();
+            }
+
+            void Reset()
+            {
+                bUse    = false;
+                nVal    = 0;
+                dLeft   = 0;
+                dTop    = 0;
+                dWidth  = 0;
+                dHeight = 0;
+            }
+
+            bool   bUse;
+            int    nVal;
+            double dLeft;
+            double dTop;
+            double dWidth;
+            double dHeight;
+        };
+
 	public:
 		CBrushState()
 		{
@@ -919,6 +981,11 @@ private:
 		{
 			m_oRect.bUse = bEnable;
 		}
+        TBrushRect& GetBrushRect()
+        {
+            return m_oRect;
+        }
+
 		inline void         SetLinearGradientPattern(const double& dX0, const double& dY0, const double& dX1, const double& dY1)
 		{
 			m_pShadingPattern[0] = dX0;
@@ -957,80 +1024,6 @@ private:
 			pPoints = m_pShadingPoints;
 			lCount  = m_lShadingPointsCount;
 		}
-
-	private:
-
-		struct TColorAndPoint
-		{
-			TColorAndPoint()
-			{
-				lColor = 0;
-				dPoint = 0;
-				bUse   = false;
-			}
-			TColorAndPoint(const LONG& color, const double& point)
-			{
-				lColor = color;
-				dPoint = point;
-				bUse   = true;
-			}
-
-			static bool Compare(const TColorAndPoint& oFirst, const TColorAndPoint& oSecond)
-			{
-				return (oFirst.dPoint < oSecond.dPoint);
-			}
-			static LONG GetLinearApprox(const TColorAndPoint& oPoint1, const TColorAndPoint& oPoint2, const double& dDstPoint)
-			{
-				double dPoint1 = oPoint1.dPoint;
-				double dPoint2 = oPoint2.dPoint;
-				LONG lColor1 = oPoint1.lColor;
-				LONG lColor2 = oPoint2.lColor;
-
-				double dDiff = dPoint2 - dPoint1;
-				if (fabs(dDiff) < 0)
-					return lColor1;
-
-				TColor oColor1 = lColor1;
-				TColor oColor2 = lColor2;
-
-                BYTE r = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.r + (oColor2.r - oColor1.r) / dDiff * (dDstPoint - dPoint1))));
-                BYTE g = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.g + (oColor2.g - oColor1.g) / dDiff * (dDstPoint - dPoint1))));
-                BYTE b = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.b + (oColor2.b - oColor1.b) / dDiff * (dDstPoint - dPoint1))));
-                BYTE a = (BYTE)(std::max)(0, (std::min)(255, (int)(oColor1.a + (oColor2.a - oColor1.a) / dDiff * (dDstPoint - dPoint1))));
-
-				TColor oResColor;
-				oResColor.Set(r, g, b, a);
-				return oResColor.lColor;
-			}
-
-			LONG   lColor;
-			double dPoint;
-			bool   bUse;
-		};
-		struct TBrushRect
-		{
-			TBrushRect()
-			{
-				Reset();
-			}
-
-			void Reset()
-			{
-				bUse    = false;
-				nVal    = 0;
-				dLeft   = 0;
-				dTop    = 0;
-				dWidth  = 0;
-				dHeight = 0;
-			}
-
-			bool   bUse;
-			int    nVal;
-			double dLeft;
-			double dTop;
-			double dWidth;
-			double dHeight; 
-		};
 
 	private:
 
@@ -1586,6 +1579,241 @@ private:
 	private:
 
 		unsigned int m_unCounter;
+	};	
+	//----------------------------------------------------------------------------------------
+	//
+	// CMultiLineTextManager
+	//
+	//----------------------------------------------------------------------------------------
+	class CMultiLineTextManager
+	{
+	public:
+		CMultiLineTextManager()
+		{
+			m_pCodes       = NULL;
+			m_pWidths      = NULL;
+			m_unLen        = 0;
+			m_ushSpaceCode = 0;
+			m_unLineHeight = 0;
+			m_nAscent      = 0;
+			m_nDescent     = 0;
+		}
+		void Init(unsigned short* pCodes, unsigned int* pWidths, const unsigned int& unLen, const unsigned short& ushSpaceCode, const unsigned int& unLineHeight, const int& nAscent)
+		{
+			m_pCodes       = pCodes;
+			m_pWidths      = pWidths;
+			m_unLen        = unLen;
+			m_ushSpaceCode = ushSpaceCode;
+			m_unLineHeight = unLineHeight;
+			m_nAscent      = nAscent;
+			m_nDescent     = unLineHeight - nAscent;
+		}
+		void Clear()
+		{
+			m_pCodes       = NULL;
+			m_pWidths      = NULL;
+			m_unLen        = 0;
+			m_ushSpaceCode = 0;
+			m_unLineHeight = 0;
+			m_nAscent      = 0;
+			m_nDescent     = 0;
+		}
+		void CalculateLines(const double& dFontSize, const double& dW)
+		{
+			m_vBreaks.clear();
+
+			bool bLineStart = true, bWord = false, bFirstItemOnLine = true;
+
+			unsigned int unPos = 0, unWordStartPos = 0;
+			double dWordWidth = 0;
+			double dX = 0, dKoef = dFontSize / 1000.0;
+
+			while (unPos < m_unLen)
+			{
+				if (IsSpace(unPos))
+				{
+					dX += dWordWidth + m_pWidths[unPos] * dKoef;
+					bWord             = false;
+					dWordWidth        = 0;
+					bLineStart        = false;
+					bFirstItemOnLine  = false;
+				}
+				else
+				{
+					double dLetterWidth = m_pWidths[unPos] * dKoef;
+					if (dX + dWordWidth + dLetterWidth > dW)
+					{
+						if (bLineStart)
+						{
+							if (bFirstItemOnLine)
+							{
+								if (unPos != m_unLen - 1)
+									m_vBreaks.push_back(unPos + 1);
+
+								unPos++;
+							}
+							else
+							{
+								m_vBreaks.push_back(unPos);
+							}
+						}
+						else
+						{
+							if (bWord)
+							{
+								m_vBreaks.push_back(unWordStartPos);
+								unPos = unWordStartPos;
+							}
+							else
+							{
+								m_vBreaks.push_back(unPos);
+							}
+						}
+
+						dX               = 0;
+						bWord            = false;
+						dWordWidth       = 0;
+						bLineStart       = true;
+						bFirstItemOnLine = true;
+						continue;
+					}
+
+					if (bWord)
+					{
+						dWordWidth += m_pWidths[unPos] * dKoef;
+					}
+					else
+					{
+						unWordStartPos = unPos;
+						bWord          = true;
+						dWordWidth     = m_pWidths[unPos] * dKoef;
+					}
+
+					bFirstItemOnLine  = false;
+				}
+
+				unPos++;
+			}
+		}
+		double ProcessAutoFit(const double& dW, const double& dH)
+		{
+			double dGoodFontSize = 0;
+
+			// Параметры подобраны для совместимости с AdobeReader
+			double dFontSize     = 4;
+			double dFontSizeStep = 0.797 / 3.0;
+
+			while (true)
+			{
+				CalculateLines(dFontSize,  dW);
+				if (CheckHeight(dH, dFontSize))
+				{
+					dGoodFontSize = dFontSize;
+					dFontSize += dFontSizeStep;
+
+					if (dFontSize > 12)
+					{
+						dFontSize = 12;
+						break;
+					}
+				}
+				else
+				{
+					if (dGoodFontSize > 0.001)
+					{
+						dFontSize = dGoodFontSize;
+						break;
+					}
+
+					dFontSize -= dFontSizeStep;
+					if (dFontSize < 4)
+					{
+						dFontSize = 4;
+						break;
+					}
+				}
+			}
+
+			return (floor(dFontSize * 1000.0 + 0.5) / 1000.0);
+		}
+		unsigned int GetLinesCount() const
+		{
+			return m_vBreaks.size() + 1;
+		}
+		unsigned int GetLineStartPos(const int& nLineIndex) const
+		{
+			if (!nLineIndex || nLineIndex > m_vBreaks.size())
+				return 0;
+
+			return m_vBreaks[nLineIndex - 1];
+		}
+		unsigned int GetLineEndPos(const int& nLineIndex) const
+		{
+			if (nLineIndex >= m_vBreaks.size())
+				return m_unLen;
+
+			return m_vBreaks[nLineIndex];
+		}
+		double GetLineWidth(const int& nLineIndex, const double& dFontSize = 10.0)
+		{
+			if (nLineIndex < 0 || nLineIndex > m_vBreaks.size())
+				return 0;
+
+			unsigned int unStart = GetLineStartPos(nLineIndex);
+			unsigned int unEnd   = GetLineEndPos(nLineIndex);
+
+			double dWidth = 0;
+			double dKoef  = dFontSize / 1000.0;
+
+			while (unStart < unEnd)
+			{
+				if (IsSpace(unStart))
+					unStart++;
+				else
+					break;
+			}
+
+			while (unEnd > unStart && unEnd > 0)
+			{
+				if (IsSpace(unEnd - 1))
+					unEnd--;
+				else
+					break;
+			}
+
+			for (unsigned int unPos = unStart; unPos < unEnd; ++unPos)
+			{
+				dWidth += m_pWidths[unPos] * dKoef;
+			}
+
+			return dWidth;
+		}
+
+
+	private:
+
+		inline bool IsSpace(const unsigned int& unPos) const
+		{
+			return (m_pCodes[unPos] == m_ushSpaceCode);
+		}
+		inline bool CheckHeight(const double& dH, const double& dFontSize) const
+		{
+			double dKoef = dFontSize / 1000.0;
+			return (GetLinesCount() * (m_unLineHeight * dKoef) < (dH - (m_nDescent * dKoef)));
+		}
+
+
+	private:
+
+		unsigned short* m_pCodes;
+		unsigned int*   m_pWidths;
+		unsigned int    m_unLen;
+		unsigned short  m_ushSpaceCode;
+		unsigned int    m_unLineHeight;
+		int             m_nAscent;
+		int             m_nDescent;
+
+		std::vector<unsigned int> m_vBreaks;
 	};
 
 private:
@@ -1621,6 +1849,7 @@ private:
 	std::vector<TFontInfo>       m_vFonts;
 	std::vector<TDestinationInfo>m_vDestinations;
 	CFieldsManager               m_oFieldsManager;
+	CMultiLineTextManager        m_oLinesManager;
 								 
 	bool                         m_bValid;
 								 

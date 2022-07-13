@@ -2849,7 +2849,7 @@ namespace SimpleTypes
 								continue;
 
 							std::wstring sTemp = sValue.substr( nIndex, nLen );
-							double dVal = sTemp.empty() ? 0 : _wtof( sTemp.c_str());
+							double dVal = XmlUtils::GetDouble( sTemp);
 
 							if ( m_nCount >= 32 )
 								break;
@@ -2946,7 +2946,7 @@ namespace SimpleTypes
 				}
 				else
 				{
-                       double dValue = sValue.empty() ? 0 : _wtof( sValue.c_str() );
+                       double dValue = XmlUtils::GetDouble( sValue);
 					SetValue( dValue );
 				}
 
@@ -3267,8 +3267,8 @@ namespace SimpleTypes
 					strY = sValue.substr( nPos + 1, nLen - nPos - 1 ) ;
 				}
 
-                m_dX = strX.empty() ? 0 : _wtof(strX.c_str() );
-                m_dY = strY.empty() ? 0 : _wtof(strY.c_str() );
+                m_dX = XmlUtils::GetDouble(strX);
+                m_dY = XmlUtils::GetDouble(strY);
 
 				return 0;
 			}
@@ -3441,8 +3441,10 @@ namespace SimpleTypes
 			cssptZIndex					= 1022,
 			csspctMsoWidthPercent		= 1023,
 			csspctMsoHeightPercent		= 1024,
+			csspctMsoTopPercent			= 1025,
+			csspctMsoLeftPercent		= 1026,
 
-			//  Для элемента Textbox 14.1.2.22
+//  Для элемента Textbox 14.1.2.22
 			cssptDirection				= 1100,
 			cssptLayoutFlow				= 1101,
 			cssptMsoDirectionAlt		= 1102,
@@ -3454,7 +3456,7 @@ namespace SimpleTypes
 			cssptMsoTextScale			= 1108,
 			cssptVTextAnchor			= 1109,
 			
-			// Для элемента Textpath 14.1.2.23
+// Для элемента Textpath 14.1.2.23
 			cssptFont					= 1200,
 			cssptFontFamily				= 1201,
 			cssptFontSize				= 1202,
@@ -3654,7 +3656,6 @@ namespace SimpleTypes
 			ECssMsoPosHorRel	eMsoPosHorRel;
 			ECssMsoPosVer		eMsoPosVer;
 			ECssMsoPosVerRel	eMsoPosVerRel;
-			double				dValue;
 			bool				bValue;
 			ECssMsoWrapStyle	eMsoWrapStyle;
 			ECssPosition		ePosition;
@@ -3822,6 +3823,9 @@ namespace SimpleTypes
 									else if ( _T("mso-wrap-style")						== sProperty ) m_eType = cssptMsoWrapStyle;
 									else if ( _T("mso-height-percent")					== sProperty ) m_eType = csspctMsoHeightPercent;
 									else if ( _T("mso-width-percent")					== sProperty ) m_eType = csspctMsoWidthPercent;
+									else if ( _T("mso-top-percent")						== sProperty ) m_eType = csspctMsoTopPercent;
+									else if (_T( "mso-left-percent")					== sProperty ) m_eType = csspctMsoLeftPercent;
+
 									else															m_eType = cssptUnknown;
 
 									break;
@@ -3909,10 +3913,10 @@ namespace SimpleTypes
 				case cssptMsoPositionHorizontalRelative	: ReadValue_MsoPosHorRel( sValue ); break;
 				case cssptMsoPositionVertical			: ReadValue_MsoPosVer( sValue ); break;
 				case cssptMsoPositionVerticalRelative	: ReadValue_MsoPosVerRel( sValue ); break;
-				case cssptMsoWrapDistanceBottom			: ReadValue_Double( sValue ); break;
-				case cssptMsoWrapDistanceLeft			: ReadValue_Double( sValue ); break;
-				case cssptMsoWrapDistanceRight			: ReadValue_Double( sValue ); break;
-				case cssptMsoWrapDistanceTop			: ReadValue_Double( sValue ); break;
+				case cssptMsoWrapDistanceBottom			: ReadValue_Units( sValue ); break;
+				case cssptMsoWrapDistanceLeft			: ReadValue_Units( sValue ); break;
+				case cssptMsoWrapDistanceRight			: ReadValue_Units( sValue ); break;
+				case cssptMsoWrapDistanceTop			: ReadValue_Units( sValue ); break;
 				case cssptMsoWrapEdited					: ReadValue_Boolean( sValue ); break;
 				case cssptMsoWrapStyle					: ReadValue_MsoWrapStyle( sValue ); break;
 				case cssptPosition						: ReadValue_Position( sValue ); break;
@@ -3930,12 +3934,12 @@ namespace SimpleTypes
 				case cssptMsoLayoutFlowAlt				: ReadValue_LayoutFlowAlt( sValue ); break;
 				case cssptMsoNextTextbox				: ReadValue_String( sValue ); break;
 				case cssptMsoRotate						: ReadValue_MsoRotate( sValue ); break;
-				case cssptMsoTextScale					: ReadValue_Double( sValue ); break;
+				case cssptMsoTextScale					: ReadValue_Units( sValue ); break;
 				case cssptVTextAnchor					: ReadValue_VTextAnchor( sValue ); break;
 
 				case cssptFont							: ReadValue_String( sValue ); break;
 				case cssptFontFamily					: ReadValue_String( sValue ); break;
-				case cssptFontSize						: ReadValue_Double( sValue ); break;
+				case cssptFontSize						: ReadValue_Units( sValue ); break;
 				case cssptFontStyle						: ReadValue_FontStyle( sValue ); break;
 				case cssptFontVariant					: ReadValue_FontVariant( sValue ); break;
 				case cssptFontWeight					: ReadValue_FontWeight( sValue ); break;
@@ -3947,9 +3951,11 @@ namespace SimpleTypes
 				case cssptVTextKern						: ReadValue_Boolean( sValue ); break;
 				case cssptVTextReverse					: ReadValue_Boolean( sValue ); break;
 				case cssptVTextSpacingMode				: ReadValue_VTextSpacingMode( sValue ); break;
-				case cssptVTextSpacing					: ReadValue_Double( sValue ); break;
-				case csspctMsoWidthPercent				: ReadValue_Double( sValue ); break;				
-				case csspctMsoHeightPercent				: ReadValue_Double( sValue ); break;
+				case cssptVTextSpacing					: ReadValue_Units( sValue ); break;
+				case csspctMsoWidthPercent				: ReadValue_Units( sValue ); break;
+				case csspctMsoHeightPercent				: ReadValue_Units( sValue ); break;
+				case csspctMsoLeftPercent				: ReadValue_Units( sValue); break;
+				case csspctMsoTopPercent				: ReadValue_Units( sValue); break;
 				case cssptHTextAlign					: ReadValue_VTextAlign( sValue ); break;
 				};
 			}
@@ -3981,7 +3987,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					m_oValue.oValue.dValue = Inch_To_Pt(dValue);
 				}
@@ -3990,7 +3996,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					   m_oValue.oValue.dValue = Cm_To_Pt(dValue);
 				}
@@ -3999,7 +4005,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					   m_oValue.oValue.dValue = Mm_To_Pt(dValue);
 				}
@@ -4016,7 +4022,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					   m_oValue.oValue.dValue = dValue;
 				}
@@ -4025,7 +4031,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					   m_oValue.oValue.dValue = dValue * 12;
 				}
@@ -4034,14 +4040,14 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypePerc;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       m_oValue.oValue.dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_oValue.oValue.dValue = XmlUtils::GetDouble(strValue);
 				}
                 else if ( -1 != ( nPos = (int)sValue.find( _T("px") ) ) )
 				{
 					m_oValue.oValue.eType = cssunitstypeUnits;
 
 					   std::wstring strValue = sValue.substr( 0, nPos );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       double dValue = XmlUtils::GetDouble(sValue);
 
 					   m_oValue.oValue.dValue = Px_To_Pt(dValue);
 				}
@@ -4050,7 +4056,7 @@ namespace SimpleTypes
 					m_oValue.oValue.eType = cssunitstypeAbsolute;
 					try
 					{
-                        m_oValue.oValue.dValue = sValue.empty() ? 0 : _wtof(sValue.c_str() );
+                        m_oValue.oValue.dValue = XmlUtils::GetDouble(sValue);
 					}
 					catch(...)
 					{
@@ -4106,23 +4112,18 @@ namespace SimpleTypes
 
             void ReadValue_Rotation(std::wstring& sValue)
             {
-				m_oValue.dValue = sValue.empty() ? 0 : _wtof(sValue.c_str() );
+				m_oValue.oValue.eType = cssunitstypeAbsolute;
+				m_oValue.oValue.dValue = XmlUtils::GetDouble( sValue );
 
 				if (sValue.find(_T("fd")) != std::wstring::npos)
 				{
-					m_oValue.dValue /= 6000.;
+					m_oValue.oValue.dValue /= 6000.;
 				}
 				else if (sValue.find(_T("f")) == sValue.length() - 1)
 				{
-					m_oValue.dValue /= 65536.;
+					m_oValue.oValue.dValue /= 65536.;
 				}
 			}
-
-			void ReadValue_Double(std::wstring& sValue)
-			{
-                    m_oValue.dValue = sValue.empty() ? 0 : _wtof(sValue.c_str() );
-            }
-
 			void ReadValue_Boolean(std::wstring& sValue)
 			{
 				if ( _T("true") == sValue || _T("t") == sValue || _T("1") == sValue ) 
@@ -4130,7 +4131,6 @@ namespace SimpleTypes
 				else
 					m_oValue.bValue = false;
 			}
-
 			void ReadValue_MsoWrapStyle(std::wstring& sValue)
 			{
 				if      ( _T("square") == sValue ) m_oValue.eMsoWrapStyle = cssmsowrapstyleSqaure;
@@ -4328,39 +4328,69 @@ namespace SimpleTypes
 				return m_sCss;
 			}
 
-			SimpleType_FromString2    (std::wstring)
-			SimpleType_Operator_Equal (CCssStyle)
+			void mergeFrom(CCssStyle* parent)
+			{
+				if (!parent) return;
+
+				for (std::map<ECssPropertyType, size_t>::iterator it = parent->m_mapProperties.begin(); it != parent->m_mapProperties.end(); ++it)
+				{
+					std::map<ECssPropertyType, size_t>::iterator pFind = m_mapProperties.find(it->first);
+					if (pFind == m_mapProperties.end())
+					{
+						m_arrProperties.push_back(parent->m_arrProperties[it->second]);
+						m_mapProperties.insert(std::make_pair(it->first, m_arrProperties.size() - 1));
+					}
+				}
+			}
+
+			SimpleType_FromString2(std::wstring)
+			SimpleType_Operator_Equal(CCssStyle)
 
 		private:
 
 			bool ParseProperties()
 			{
 				std::wstring sTemp = m_sCss;
-				while ( sTemp.length() > 0 )
+				while ( false == sTemp.empty() )
 				{
-                    int nPos = (int)sTemp.find( ';' );
-					if ( -1 == nPos )
+                    size_t nPos = (int)sTemp.find( ';' );
+					if ( std::wstring::npos == nPos )
 					{
-						CCssProperty *oProperty = new CCssProperty(sTemp);
-						if ((oProperty) && (cssptUnknown != oProperty->get_Type()) )
+						CCssPropertyPtr pProperty = CCssPropertyPtr(new CCssProperty(sTemp));
+						if ((pProperty) && (cssptUnknown != pProperty->get_Type()) )
 						{
-							m_arrProperties.push_back( CCssPropertyPtr(oProperty) );
+							std::map<ECssPropertyType, size_t>::iterator pFind = m_mapProperties.find(pProperty->get_Type());
+							if (pFind != m_mapProperties.end())
+							{
+								m_arrProperties[pFind->second] = pProperty;
+							}
+							else
+							{
+								m_arrProperties.push_back(pProperty);
+								m_mapProperties.insert(std::make_pair(pProperty->get_Type(), m_arrProperties.size() - 1));
+							}
 						}
-						else
-							delete oProperty;
 
                         sTemp.clear();
 						continue;
 					}
 					else
 					{
-						CCssProperty *oProperty = new  CCssProperty( sTemp.substr( 0, nPos ) );
-						if ((oProperty) &&  (cssptUnknown != oProperty->get_Type()) )
+						CCssPropertyPtr pProperty = CCssPropertyPtr(new  CCssProperty( sTemp.substr( 0, nPos )));
+						
+						if ((pProperty) &&  (cssptUnknown != pProperty->get_Type()) )
 						{
-							m_arrProperties.push_back( CCssPropertyPtr(oProperty) );
+							std::map<ECssPropertyType, size_t>::iterator pFind = m_mapProperties.find(pProperty->get_Type());
+							if (pFind != m_mapProperties.end())
+							{
+								m_arrProperties[pFind->second] = pProperty;
+							}
+							else
+							{
+								m_arrProperties.push_back(pProperty);
+								m_mapProperties.insert(std::make_pair(pProperty->get_Type(), m_arrProperties.size() - 1));
+							}
 						}
-						else
-							delete oProperty;
 
 						sTemp = sTemp.substr( nPos + 1, sTemp.length() - nPos - 1 );
 					}
@@ -4370,9 +4400,9 @@ namespace SimpleTypes
 			}
 
 		public:
-
-			std::vector<CCssPropertyPtr>	m_arrProperties;
-			std::wstring 					m_sCss;
+			std::map<ECssPropertyType, size_t>	m_mapProperties;
+			std::vector<CCssPropertyPtr>		m_arrProperties;
+			std::wstring 						m_sCss;
 		};
 		//--------------------------------------------------------------------------------
 		// Vml_Vector2D_Units 14.1.2.3 (from, control1, control2, to) 
@@ -4834,7 +4864,7 @@ namespace SimpleTypes
 					case '.':
 
 						eValue = vmlvector2dposConstant;
-                    dValue = sValue.empty() ? 0 : _wtof(sValue.c_str() );
+						dValue = XmlUtils::GetDouble(sValue);
 						break;
 
 					case 'c':
@@ -4995,8 +5025,8 @@ namespace SimpleTypes
 						XmlUtils::replace_all(strX, L"@", L"");
 						XmlUtils::replace_all(strY, L"@", L"");
 
-                       int nX = strX.empty() ? 0 : _wtoi(strX.c_str() );
-                       int nY = strY.empty() ? 0 : _wtoi(strY.c_str() );
+                       int nX = XmlUtils::GetDouble(strX);
+                       int nY = XmlUtils::GetDouble(strY );
 
 					   m_arrPoints.push_back( TPoint( nX, nY ) );
 
@@ -5081,20 +5111,21 @@ namespace SimpleTypes
 
 				if ( bFraction )
 				{
-					   std::wstring strValue = sValue.substr( 0, nLen - 1 );
-                       int nValue = strValue.empty() ? 0 : _wtoi(strValue.c_str() );
+					std::wstring strValue = sValue.substr( 0, nLen - 1 );
+					int nValue = strValue.empty() ? 0 : _wtoi(strValue.c_str() );
 
-					   SetValue( nValue );
+					SetValue( nValue );
 				}
 				else if ( bPercentage )
 				{
-					   std::wstring strValue = sValue.substr( 0, nLen - 1 );
-                       double dValue = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+					std::wstring strValue = sValue.substr( 0, nLen - 1 );
+					double dValue = XmlUtils::GetDouble(strValue);
+					
 					SetPercentage( dValue );
 				}
 				else
 				{
-                       double dValue = sValue.empty() ? 0 : _wtof(sValue.c_str() );
+					double dValue = XmlUtils::GetDouble(sValue);
 					SetValue( dValue );
 				}
 
@@ -5217,7 +5248,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 					{
 					   std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                       m_dSxx = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_dSxx = XmlUtils::GetDouble(strValue);
 					}
 
 				// Sxy
@@ -5229,7 +5260,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 					{
 					   std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                       m_dSxy = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_dSxy = XmlUtils::GetDouble(strValue);
 					}
 
 				// Syx
@@ -5241,7 +5272,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 					{
 					   std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                       m_dSyx = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_dSyx = XmlUtils::GetDouble(strValue);
 					}
 
 				// Syy
@@ -5253,7 +5284,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 					{
 					   std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                       m_dSyy = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_dSyy = XmlUtils::GetDouble(strValue);
 					}
 
 				// Px
@@ -5265,7 +5296,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 					{
 					   std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                       m_dPx = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                       m_dPx = XmlUtils::GetDouble(strValue);
 					}
 
 				// Py
@@ -5277,7 +5308,7 @@ namespace SimpleTypes
 				if ( nEndPos - nStartPos > 0 )
 				{
 					std::wstring strValue = sValue.substr( nStartPos, nEndPos - nStartPos );
-                    m_dPy = strValue.empty() ? 0 : _wtof(strValue.c_str() );
+                    m_dPy = XmlUtils::GetDouble(strValue);
 				}
 
 				nStartPos = nEndPos + 1;		

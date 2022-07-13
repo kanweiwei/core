@@ -66,15 +66,12 @@ CBaseShapePtr CPPTShape::CreateByType(PPTShapes::ShapeType type)
 // msosptNotchedCircularArrow	0x00000064 A value that SHOULD NOT be used.
 // msosptHostControl			0x000000C9 A value that SHOULD NOT be used.
 
-	//case sptNotchedCircularArrow:
-
 	case sptHostControl:		
 			{ pShape = new CPPTShape();  pShape->m_eType = type; break; }
 	case 0: { pShape = new CRectangleType(); break; }
 	
+	case sptNotchedCircularArrow:
 	case sptPictureFrame: { pShape = new CRectangleType(); pShape->m_eType = type; break; }
-
-		CREATE_BY_SPT(0x00000064, CArcType)
 
 		CREATE_BY_SPT(sptAccentBorderCallout90, CAccentBorderCallout90Type)
 		CREATE_BY_SPT(sptAccentBorderCallout1, CAccentBorderCallout1Type)
@@ -374,7 +371,7 @@ bool CPPTShape::LoadFromXMLShapeType(XmlUtils::CXmlNode& oNodeShapeType) // vml 
     std::wstring sId = oNodeShapeType.GetAttribute(_T("o:spt"));
 
     bool bIsNeedRecalc = true;
-    if (sId != _T(""))
+    if (false == sId.empty())
     {
         int id = XmlUtils::GetInteger(sId);
         if (id > 0)
@@ -385,7 +382,7 @@ bool CPPTShape::LoadFromXMLShapeType(XmlUtils::CXmlNode& oNodeShapeType) // vml 
         }
     }
     std::wstring strAdj = oNodeShapeType.GetAttribute(_T("adj"));
-    if (strAdj != _T(""))
+    if (false == strAdj.empty())
         LoadAdjustValuesList(strAdj);
 
     XmlUtils::CXmlNode oNodeGuides;
@@ -398,7 +395,7 @@ bool CPPTShape::LoadFromXMLShapeType(XmlUtils::CXmlNode& oNodeShapeType) // vml 
     if (oNodeShapeType.GetNode(_T("v:path"), oNodePath))
     {
         std::wstring strTextR = oNodePath.GetAttribute(_T("textboxrect"));
-        if (strTextR != _T(""))
+        if (false == strTextR.empty())
             LoadTextRect(strTextR);
     }
 
@@ -409,7 +406,7 @@ bool CPPTShape::LoadFromXMLShapeType(XmlUtils::CXmlNode& oNodeShapeType) // vml 
     }
 
     std::wstring strPath = oNodeShapeType.GetAttribute(_T("path"));
-    if (strPath != _T(""))
+    if (false == strPath.empty())
     {
         LoadPathList(strPath);
     }
@@ -417,9 +414,41 @@ bool CPPTShape::LoadFromXMLShapeType(XmlUtils::CXmlNode& oNodeShapeType) // vml 
     XmlUtils::CXmlNode oNodeTextPath;
     if (oNodeShapeType.GetNode(_T("v:textpath"), oNodeTextPath))
     {
+		m_textPath.bEnabled = true;
+
         if (m_eType < PPTShapes::ShapeType::sptCTextPlain || m_eType > PPTShapes::ShapeType::sptCTextCanDown)
             m_eType = PPTShapes::ShapeType::sptCTextPlain;
-    }
+		nullable_bool oFitPath;
+		
+		XmlMacroReadAttributeBase(oNodeTextPath, L"fitpath", oFitPath);
+		if (oFitPath.is_init() && (*oFitPath))
+		{
+			m_textPath.bFitPath = true;
+		}
+
+		nullable_bool oFitShape;
+		XmlMacroReadAttributeBase(oNodeTextPath, L"fitshape", oFitShape);
+		if (oFitShape.is_init() && (*oFitShape))
+		{
+			m_textPath.bFitShape = true;
+		}
+
+		nullable_bool oTrim;
+		XmlMacroReadAttributeBase(oNodeTextPath, L"trim", oTrim);
+		if (oTrim.is_init() && (*oTrim))
+		{
+			m_textPath.bTrim = true;
+		}
+		nullable_string oStyle;
+		XmlMacroReadAttributeBase(oNodeTextPath, L"style", oStyle);
+		if (oStyle.is_init() && (false == oStyle->empty()))
+		{
+			if (m_textPath.sStyle)
+				m_textPath.sStyle = (*m_textPath.sStyle) + L";" + (*oStyle);
+			else 
+				m_textPath.sStyle = *oStyle;
+		}
+	}
 
     std::wstring strFilled = oNodeShapeType.GetAttribute(_T("filled"));
     std::wstring strStroked = oNodeShapeType.GetAttribute(_T("stroked"));

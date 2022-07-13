@@ -35,6 +35,7 @@
 
 #include "../SharedStrings/Si.h"
 #include "Cols.h"
+#include "../../XlsbFormat/Biff12_unions/CELLTABLE.h"
 
 namespace NSBinPptxRW
 {
@@ -155,6 +156,7 @@ namespace OOX
 			}
 			void fromXLSB (NSBinPptxRW::CBinaryFileReader& oStream);
 			void fromXLSBExt (NSBinPptxRW::CBinaryFileReader& oStream, _UINT16 nFlags);
+            void fromBin(XLS::BaseObjectPtr& obj, SimpleTypes::Spreadsheet::ECellFormulaType eType);
 			virtual EElementType getType () const
 			{
 				return et_x_Formula;
@@ -264,6 +266,7 @@ namespace OOX
 			virtual void toXML(NSStringUtils::CStringBuilder& writer) const;
 			virtual void fromXML(XmlUtils::CXmlLiteReader& oReader);
 			void fromXLSB (NSBinPptxRW::CBinaryFileReader& oStream, _UINT16 nType, _UINT32 nRow);
+            void fromBin(XLS::BaseObjectPtr& obj);
 
 			virtual EElementType getType () const
 			{
@@ -382,12 +385,14 @@ namespace OOX
 		private:
 			void PrepareForBinaryWriter();
 			void ReadAttributes(XmlUtils::CXmlLiteReader& oReader);
+            void ReadAttributes(XLS::BaseObjectPtr& obj);
 			void ReadComment(XmlUtils::CXmlLiteReader& oReader, CCommentItem* pComment);
 
 			void AfterRead();
-			//----------- 2003			
+	//----------- 2003			
 			void After2003Read();
 
+			nullable<CCommentItem> pCommentItem;
 			nullable_string sStyleId;
 			nullable_string sArrayRange;
 			nullable_string sHyperlink;
@@ -407,6 +412,8 @@ namespace OOX
 			nullable<CFormula>		m_oFormula;
 			nullable<CSi>			m_oRichText;
 			nullable<CText>			m_oValue;
+//-----------------------------			
+			nullable_string			m_oCacheValue;
 		};
 
 		//необработано:
@@ -447,7 +454,9 @@ namespace OOX
 			virtual void fromXML(XmlUtils::CXmlLiteReader& oReader);
 			void fromXMLToXLSB(XmlUtils::CXmlLiteReader& oReader, NSBinPptxRW::CXlsbBinaryWriter& oStream, CCellXLSB& oCell);
 			void fromXLSB (NSBinPptxRW::CBinaryFileReader& oStream, _UINT16 nType);
-			void toXLSB (NSBinPptxRW::CXlsbBinaryWriter& oStream) const;
+			void toXLSB (NSBinPptxRW::CXlsbBinaryWriter& oStream) const;            
+            void fromBin(XLSB::CELLTABLE::_data& obj);
+
 			virtual EElementType getType () const
 			{
 				return et_x_Row;
@@ -456,6 +465,7 @@ namespace OOX
 		private:
 
 			void ReadAttributes(XmlUtils::CXmlLiteReader& oReader);
+            void ReadAttributes(XLSB::CELLTABLE::_data& obj);
 			void CheckIndex();
 
 		public:
@@ -471,16 +481,13 @@ namespace OOX
 			nullable<SimpleTypes::COnOff<>>					m_oThickBot;
 			nullable<SimpleTypes::COnOff<>>					m_oThickTop;
 			nullable<SimpleTypes::CDouble>					m_oDyDescent;
-
-//-------------------------------------------------------------------------
-			std::map<int, unsigned int>	m_mapStyleMerges2003;
-
 		};
 
 		class CSheetData  : public WritingElementWithChilds<CRow>
 		{
 		public:
 			WritingElement_AdditionConstructors(CSheetData)
+            WritingElement_XlsbConstructors(CSheetData)
 			CSheetData(OOX::Document *pMain = NULL) : WritingElementWithChilds<CRow>(pMain)
 			{
 			}
@@ -516,12 +523,18 @@ namespace OOX
 			}
 			virtual void fromXML(XmlUtils::CXmlLiteReader& oReader);
 			void fromXLSB (NSBinPptxRW::CBinaryFileReader& oStream, _UINT16 nType, CSVWriter::CCSVWriter* pCSVWriter, NSFile::CStreamWriter& oStreamWriter);
+
+            void fromBin(XLS::BaseObjectPtr& obj);
+
 			virtual EElementType getType () const
 			{
 				return et_x_SheetData;
 			}
 		
 			nullable<SimpleTypes::CUnsignedDecimalNumber<>>	m_oXlsbPos;
+		
+			std::map<int, std::map<int, unsigned int>>	m_mapStyleMerges2003; // map(row, map(col, style))
+			void StyleFromMapStyleMerges2003(std::map<int, unsigned int> &mapStyleMerges);
 		private:
 			void fromXLSBToXmlCell (CCell& pCell, CSVWriter::CCSVWriter* pCSVWriter, NSFile::CStreamWriter& oStreamWriter);
 			void fromXLSBToXmlRowStart (CRow* pRow, CSVWriter::CCSVWriter* pCSVWriter, NSFile::CStreamWriter& oStreamWriter);
@@ -529,10 +542,18 @@ namespace OOX
 
 			void ReadAttributes(XmlUtils::CXmlLiteReader& oReader);
 
+            void ReadAttributes(XLS::BaseObjectPtr& obj);
+
 	// spreadsheets 2003
+
 			nullable_string m_sStyleID;
 			nullable_double m_dDefaultColumnWidth;
 			nullable_double m_dDefaultRowHeight;
+			nullable_int m_nExpandedColumnCount;
+			nullable_int m_nExpandedRowCount;
+			nullable_int m_nFullColumns;
+			nullable_int m_nFullRows;
+
 		};
 	} //Spreadsheet
 } // namespace OOX

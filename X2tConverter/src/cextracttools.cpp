@@ -113,7 +113,9 @@ namespace NExtractTools
 				case AVS_OFFICESTUDIO_FILE_DOCUMENT_DOCM:
 				case AVS_OFFICESTUDIO_FILE_DOCUMENT_DOTX:
 				case AVS_OFFICESTUDIO_FILE_DOCUMENT_DOTM:
-					{
+				case AVS_OFFICESTUDIO_FILE_DOCUMENT_OFORM:
+				case AVS_OFFICESTUDIO_FILE_DOCUMENT_DOCXF:
+				{
 							 if (0 == sExt2.compare(_T(".doct")))		res = TCD_DOCX2DOCT;
 						else if (0 == sExt2.compare(_T(".bin")))		res = TCD_DOCX2DOCT_BIN;
 						else if (0 == sExt2.compare(_T(".rtf")))		res = TCD_DOCX2RTF;
@@ -126,11 +128,15 @@ namespace NExtractTools
 								res = TCD_DOCM2DOCX;
 							if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_DOCUMENT_DOTM)
 								res = TCD_DOTM2DOCX;
+							//oform 2 docx ???
+							//docxf 2 docx ???
 						}
                         else if (0 == sExt2.compare(_T(".docm")))	res = TCD_DOTM2DOCM;
-						else if (0 == sExt2.compare(_T(".txt")))		res = TCD_DOCX2TXT;
+						else if (0 == sExt2.compare(_T(".txt")))	res = TCD_DOCX2TXT;
 				}break;
-				case AVS_OFFICESTUDIO_FILE_DOCUMENT_PACKAGE:
+				case AVS_OFFICESTUDIO_FILE_DOCUMENT_DOCX_PACKAGE:
+				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSX_PACKAGE:
+				case AVS_OFFICESTUDIO_FILE_PRESENTATION_PPTX_PACKAGE:
 					{
 							 if (0 == sExt2.compare(_T(".doct")))		res = TCD_PKG2BIN_T;
 						else if (0 == sExt2.compare(_T(".pptt")))		res = TCD_PKG2BIN_T;
@@ -149,27 +155,32 @@ namespace NExtractTools
 					{
 							 if (0 == sExt2.compare(_T(".xlst")))		res = TCD_XLSXFLAT2XLST;
 						else if (0 == sExt2.compare(_T(".bin")))		res = TCD_XLSXFLAT2XLST_BIN;
-					}break;
+						else if (0 == sExt2.compare(_T(".xlsx")))		res = TCD_XLSXFLAT2XLSX;
+				}break;
 				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSX:
 				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSM:
 				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTX:
-				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTM:
-					{
-							 if (0 == sExt2.compare(_T(".xlst")))		res = TCD_XLSX2XLST;
-						else if (0 == sExt2.compare(_T(".bin")))		res = TCD_XLSX2XLST_BIN;
-						else if (0 == sExt2.compare(_T(".csv")))		res = TCD_XLSX2CSV;
-                        else if (0 == sExt2.compare(_T(".ods")))		res = TCD_XLSX2ODS;
-                        else if (0 == sExt2.compare(_T(".xlsx")))
-						{
-							if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTX)
-								res = TCD_XLTX2XLSX;
-							if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSM)
-								res = TCD_XLSM2XLSX;
-							if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTM)
-								res = TCD_XLTM2XLSX;
-						}
-                        else if (0 == sExt2.compare(_T(".xlsm")))		res = TCD_XLTM2XLSM;
-                    }break;
+				case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTM:				
+                {
+                         if (0 == sExt2.compare(_T(".xlst")))		res = TCD_XLSX2XLST;
+                    else if (0 == sExt2.compare(_T(".bin")))		res = TCD_XLSX2XLST_BIN;
+                    else if (0 == sExt2.compare(_T(".csv")))		res = TCD_XLSX2CSV;
+                    else if (0 == sExt2.compare(_T(".ods")))		res = TCD_XLSX2ODS;
+                    else if (0 == sExt2.compare(_T(".xlsx")))
+                    {
+                        if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTX)
+                            res = TCD_XLTX2XLSX;
+                        if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSM)
+                            res = TCD_XLSM2XLSX;
+                        if (OfficeFileFormatChecker.nFileType == AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLTM)
+                            res = TCD_XLTM2XLSX;
+                    }
+                    else if (0 == sExt2.compare(_T(".xlsm")))		res = TCD_XLTM2XLSM;
+                }break;
+                case AVS_OFFICESTUDIO_FILE_SPREADSHEET_XLSB:
+                {
+                    if (0 == sExt2.compare(_T(".xlst")))		res = TCD_XLSB2XLST;
+                }
                 case AVS_OFFICESTUDIO_FILE_PRESENTATION_PPTX:
                 case AVS_OFFICESTUDIO_FILE_PRESENTATION_PPTM:
 				case AVS_OFFICESTUDIO_FILE_PRESENTATION_PPSX:
@@ -203,12 +214,14 @@ namespace NExtractTools
 					}break;
 				case AVS_OFFICESTUDIO_FILE_TEAMLAB_DOCY:
 					{
-							 if (0 == sExt2.compare(_T(".docx")))		res = TCD_DOCT2DOCX;
+							 if (0 == sExt2.compare(_T(".oform")))		res = TCD_DOCT2OFORM;
+						else if (0 == sExt2.compare(_T(".docxf")))		res = TCD_DOCT2DOCXF;
+						else if (0 == sExt2.compare(_T(".docx")))		res = TCD_DOCT2DOCX;
 						else if (0 == sExt2.compare(_T(".docm")))		res = TCD_DOCT2DOCM;
 						else if (0 == sExt2.compare(_T(".dotx")))		res = TCD_DOCT2DOTX;
 						else if (0 == sExt2.compare(_T(".bin")))		res = TCD_T2BIN;
 						else if (0 == sExt2.compare(_T(".rtf")))		res = TCD_DOCT2RTF;
-					}break;
+				}break;
 				case AVS_OFFICESTUDIO_FILE_TEAMLAB_XLSY:
 					{
 							 if (0 == sExt2.compare(_T(".xlsx")))		res = TCD_XLST2XLSX;
@@ -228,6 +241,7 @@ namespace NExtractTools
 					{
 							 if (0 == sExt2.compare(_T(".docx")))		res = TCD_DOCT_BIN2DOCX;
 						else if (0 == sExt2.compare(_T(".docm")))		res = TCD_DOCT_BIN2DOCX;
+						else if (0 == sExt2.compare(_T(".oform")))		res = TCD_DOCT_BIN2DOCX;
 						else if (0 == sExt2.compare(_T(".dotx")))		res = TCD_DOCT_BIN2DOCX;
 						else if (0 == sExt2.compare(_T(".doct")))		res = TCD_BIN2T;
 						else if (0 == sExt2.compare(_T(".rtf")))		res = TCD_DOCT_BIN2RTF;
@@ -288,7 +302,7 @@ namespace NExtractTools
 						else if (0 == sExt2.compare(_T(".bin")))		res = TCD_TXT2DOCT_BIN;
 					}break;
                 case AVS_OFFICESTUDIO_FILE_PRESENTATION_PPT:
-                    {
+                    {//pot,pps - by extension - potx(potm), ppsx(ppsm)
                              if (0 == sExt2.compare(_T(".pptx")))		res = TCD_PPT2PPTX;
                         else if (0 == sExt2.compare(_T(".pptm")))		res = TCD_PPT2PPTM;
                         else if (0 == sExt2.compare(_T(".bin")))		res = TCD_PPT2PPTT_BIN;
@@ -385,7 +399,7 @@ namespace NExtractTools
         return oBuilder.GetData();
     }
     std::wstring getDoctXml(NSDoctRenderer::DoctRendererFormat::FormatFile eFromType, NSDoctRenderer::DoctRendererFormat::FormatFile eToType,
-                            const std::wstring& sTFileDir, const std::wstring& sPdfBinFile, const std::wstring& sImagesDirectory,
+                            const std::wstring& sTFileSrc, const std::wstring& sPdfBinFile, const std::wstring& sImagesDirectory,
                             const std::wstring& sThemeDir, int nTopIndex, const std::wstring& sMailMerge, const InputParams& params)
     {
         NSStringUtils::CStringBuilder oBuilder;
@@ -394,7 +408,7 @@ namespace NExtractTools
         oBuilder.WriteString(_T("</SrcFileType><DstFileType>"));
         oBuilder.AddInt((int)eToType);
         oBuilder.WriteString(_T("</DstFileType><SrcFilePath>"));
-        oBuilder.WriteEncodeXmlString(sTFileDir.c_str());
+        oBuilder.WriteEncodeXmlString(sTFileSrc.c_str());
         oBuilder.WriteString(_T("</SrcFilePath><DstFilePath>"));
         oBuilder.WriteEncodeXmlString(sPdfBinFile.c_str());
         oBuilder.WriteString(_T("</DstFilePath><FontsDirectory>"));
@@ -432,7 +446,7 @@ namespace NExtractTools
         oBuilder.WriteString(_T("<Changes TopItem=\""));
         oBuilder.AddInt(nTopIndex);
         oBuilder.WriteString(_T("\">"));
-        std::wstring sChangesDir = sTFileDir + FILE_SEPARATOR_STR + _T("changes");
+        std::wstring sChangesDir = NSDirectory::GetFolderPath(sTFileSrc) + FILE_SEPARATOR_STR + _T("changes");
         if (NSDirectory::Exists(sChangesDir))
         {
             std::vector<std::wstring> aChangesFiles;
@@ -472,7 +486,7 @@ namespace NExtractTools
             int nChangeIndex = -1;
             while (true)
             {
-                std::wstring sXml = getDoctXml(eType, eType, sBinDir, sBinTo, sImagesDirectory, sThemeDir, nChangeIndex, _T(""), params);
+                std::wstring sXml = getDoctXml(eType, eType, sBinFrom, sBinTo, sImagesDirectory, sThemeDir, nChangeIndex, _T(""), params);
 				std::wstring sResult;
                 oDoctRenderer.Execute(sXml, sResult);
                 bool bContinue = false;
