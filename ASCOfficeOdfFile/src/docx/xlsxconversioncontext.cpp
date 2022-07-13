@@ -34,8 +34,8 @@
 
 #include <iostream>
 
-#include <odf/odf_document.h>
-#include <xml/simple_xml_writer.h>
+#include "../../include/odf/odf_document.h"
+#include "../../include/xml/simple_xml_writer.h"
 
 #include "measuredigits.h"
 #include "xlsx_package.h"
@@ -65,7 +65,7 @@ xlsx_conversion_context::xlsx_conversion_context(odf_reader::odf_document * odfD
 	odf_document_		(odfDocument),
 	output_document_	(NULL),
 	num_format_context_	(odf_document_->odf_context()),
-	xlsx_text_context_	(odf_document_->odf_context().styleContainer()),
+	xlsx_text_context_	(odf_document_->odf_context()),
 	xlsx_table_context_	(this, xlsx_text_context_),
 	math_context_		(odf_document_->odf_context().fontContainer(), true),
 	xlsx_style_			(this),
@@ -241,6 +241,13 @@ void xlsx_conversion_context::end_document()
                 CP_XML_ATTR(L"xmlns", L"http://schemas.openxmlformats.org/spreadsheetml/2006/main");
                 CP_XML_ATTR(L"xmlns:r", L"http://schemas.openxmlformats.org/officeDocument/2006/relationships");
 
+				if (table_structure_protected_)
+				{
+					CP_XML_NODE(L"workbookProtection")
+					{
+						CP_XML_ATTR(L"lockStructure", 1);
+					}
+				}
 				serialize_bookViews (CP_XML_STREAM());
 
                 CP_XML_NODE(L"sheets")
@@ -609,7 +616,10 @@ void xlsx_conversion_context::start_office_spreadsheet(const odf_reader::office_
 {
     spreadsheet_ = elm;
 }
-
+void xlsx_conversion_context::set_table_structure_protected(bool val)
+{
+	table_structure_protected_ = val;
+}
 const odf_reader::office_element * xlsx_conversion_context::get_spreadsheet()
 {
     return spreadsheet_;

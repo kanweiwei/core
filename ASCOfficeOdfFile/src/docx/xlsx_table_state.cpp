@@ -29,10 +29,9 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-#include <odf/odf_document.h>
-#include <xml/simple_xml_writer.h>
-
-#include "logging.h"
+#include "../../include/odf/odf_document.h"
+#include "../../include/xml/simple_xml_writer.h"
+#include "../../include/logging.h"
 
 #include "xlsx_table_state.h"
 #include "xlsx_utils.h"
@@ -42,7 +41,7 @@
 #include "../odf/style_table_properties.h"
 #include "../odf/datatypes/stylefamily.h"
 
-#include "../formulasconvert/formulasconvert.h"
+#include "../../formulasconvert/formulasconvert.h"
 
 #include "../../../OfficeCryptReader/source/CryptTransform.h"
 
@@ -88,33 +87,35 @@ void xlsx_data_range::serialize_sort (std::wostream & _Wostream)
 					ref1 = ref.substr(0, pos );
 					ref2 = ref.substr(pos + 1);
 				}
-				getCellAddressInv(ref1, col_1, row_1);
-				getCellAddressInv(ref2, col_2, row_2);
 
-				if (byRow)
+				if (getCellAddressInv(ref1, col_1, row_1) &&
+					getCellAddressInv(ref2, col_2, row_2))
 				{
-					if (bySort[i].first < col_1 || bySort[i].first > col_2 )	in_range = false;
-
-					ref1 = getCellAddress(bySort[i].first + ( withHeader ? 1 : 0), row_1);
-					ref2 = getCellAddress(bySort[i].first + ( withHeader ? 1 : 0), row_2);
-				}
-				else
-				{
-					if (bySort[i].first < row_1 || bySort[i].first > row_2 )	in_range = false;
-
-					ref1 = getCellAddress(col_1, bySort[i].first + ( withHeader ? 1 : 0));
-					ref2 = getCellAddress(col_2, bySort[i].first + ( withHeader ? 1 : 0));
-				}
-				if (in_range)
-				{
-					CP_XML_NODE(L"sortCondition")
+					if (byRow)
 					{
-						CP_XML_ATTR(L"ref", ref1 + L":" + ref2);	
+						if (bySort[i].first < col_1 || bySort[i].first > col_2)	in_range = false;
 
-						if (bySort[i].second)
-							CP_XML_ATTR(L"descending", 1);	
+						ref1 = getCellAddress(bySort[i].first + (withHeader ? 1 : 0), row_1);
+						ref2 = getCellAddress(bySort[i].first + (withHeader ? 1 : 0), row_2);
 					}
+					else
+					{
+						if (bySort[i].first < row_1 || bySort[i].first > row_2)	in_range = false;
 
+						ref1 = getCellAddress(col_1, bySort[i].first + (withHeader ? 1 : 0));
+						ref2 = getCellAddress(col_2, bySort[i].first + (withHeader ? 1 : 0));
+					}
+					if (in_range)
+					{
+						CP_XML_NODE(L"sortCondition")
+						{
+							CP_XML_ATTR(L"ref", ref1 + L":" + ref2);
+
+							if (bySort[i].second)
+								CP_XML_ATTR(L"descending", 1);
+						}
+
+					}
 				}
 			}
 		}	
@@ -137,8 +138,7 @@ xlsx_table_state::xlsx_table_state(xlsx_conversion_context * Context, std::wstri
 	in_cell(false),
 	bEndTable(false),
 	bRTL(false),
-	bHidden(false),
-	bProtected(false)
+	bHidden(false)
 {        
 	odf_reader::style_table_properties	* table_prop = NULL;
 	odf_reader::style_instance			* tableStyle = context_->root()->odf_context().styleContainer().style_by_name(table_style_, odf_types::style_family::Table, false);
@@ -176,13 +176,13 @@ void xlsx_table_state::set_rtl(bool val)
 
 void xlsx_table_state::set_protection(bool val, const std::wstring &key, const std::wstring &algorithm)
 {
-	bProtected = val;
-	protect_key = key;
+	protection.bEnabled = val;
+	protection.protect_key = key;
 	
 	size_t pos = algorithm.find(L"#");
 	if (pos != std::wstring::npos)
 	{
-		protect_key_algorithm = algorithm.substr(pos + 1);
+		protection.protect_key_algorithm = algorithm.substr(pos + 1);
 	}
 
 	//test
@@ -193,7 +193,30 @@ void xlsx_table_state::set_protection(bool val, const std::wstring &key, const s
 	//bool res = protect.Verify();
 
 }
-
+void xlsx_table_state::set_protection_select_protected_cells(bool val)
+{
+	protection.selectLockedCells = !val;
+}
+void xlsx_table_state::set_protection_select_unprotected_cells(bool val)
+{
+	protection.selectUnockedCells = !val;
+}
+void xlsx_table_state::set_protection_insert_columns(bool val)
+{
+	protection.insertColumns = !val;
+}
+void xlsx_table_state::set_protection_insert_rows(bool val)
+{
+	protection.insertRows = !val;
+}
+void xlsx_table_state::set_protection_delete_columns(bool val)
+{
+	protection.deleteColumns = !val;
+}
+void xlsx_table_state::set_protection_delete_rows(bool val)
+{
+	protection.deleteRows = !val;
+}
 unsigned int xlsx_table_state::columns_count() const
 {
     return columns_count_;
@@ -487,16 +510,34 @@ void xlsx_table_state::serialize_background (std::wostream & strm)
 }
 void xlsx_table_state::serialize_protection (std::wostream & strm)
 {
-	if (!bProtected) return;
+	if (!protection.bEnabled) return;
 	
 	CP_XML_WRITER(strm)
 	{
 		CP_XML_NODE(L"sheetProtection")
 		{
-			CP_XML_ATTR(L"sheet", 1);
-			CP_XML_ATTR(L"objects", 1);
-			CP_XML_ATTR(L"scenarios", 1);
 //convert protection odf->ooxml impossible without password !!!
+			//CP_XML_ATTR(L"algorithmName", );
+			//CP_XML_ATTR(L"hashValue", );
+			//CP_XML_ATTR(L"saltValue", );
+			//CP_XML_ATTR(L"spinCount", );
+
+			CP_XML_ATTR(L"sheet", 1);
+			CP_XML_ATTR(L"objects", 0);
+			CP_XML_ATTR(L"scenarios", 0);
+			CP_XML_ATTR(L"formatCells", 1);
+			CP_XML_ATTR(L"formatColumns", 1);
+			CP_XML_ATTR(L"formatRows", 1);
+			CP_XML_ATTR(L"insertColumns", protection.insertColumns);
+			CP_XML_ATTR(L"insertRows", protection.insertRows);
+			CP_XML_ATTR(L"insertHyperlinks", 1);
+			CP_XML_ATTR(L"deleteColumns", protection.deleteColumns);
+			CP_XML_ATTR(L"deleteRows", protection.deleteRows);
+			CP_XML_ATTR(L"selectLockedCells", protection.selectLockedCells);
+			CP_XML_ATTR(L"sort", 1);
+			CP_XML_ATTR(L"autoFilter", 1);
+			CP_XML_ATTR(L"pivotTables", 1);
+			CP_XML_ATTR(L"selectUnlockedCells", protection.selectUnockedCells);
 		}
 	}
 }

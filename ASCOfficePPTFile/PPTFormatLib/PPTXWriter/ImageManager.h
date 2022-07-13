@@ -32,7 +32,7 @@
 #pragma once
 
 #ifndef DISABLE_FILE_DOWNLOADER
-#include "../../../Common/FileDownloader/FileDownloader.h"
+#include "../../../Common/Network/FileTransporter/include/FileTransporter.h"
 #endif
 #include <boost/algorithm/string.hpp>
 #include "../../../ASCOfficePPTXFile/Editor/Drawing/Attributes.h"
@@ -105,7 +105,7 @@ namespace PPT_FORMAT
 			if (IsNeedDownload(strInput))
 			{
 #ifndef DISABLE_FILE_DOWNLOADER
-				CFileDownloader oDownloader(strInput, TRUE);
+                NSNetwork::NSFileTransport::CFileDownloader oDownloader(strInput, TRUE);
 				if ( oDownloader.DownloadSync() )
 				{
 					std::wstring file_name = oDownloader.GetFilePath();
@@ -319,7 +319,7 @@ namespace PPT_FORMAT
                 std::wstring strRid = L"rId" + pPair->second;
                 return strRid;
             }
-            m_mapHyperlinks[strPath] = m_lNextRelsID;
+            m_mapHyperlinks[strPath] = std::to_wstring( m_lNextRelsID );
 
             std::wstring strRid = L"rId" + std::to_wstring( m_lNextRelsID++);
 

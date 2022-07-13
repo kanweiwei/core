@@ -482,24 +482,24 @@ void OoxConverter::convert(PPTX::Logic::SmartArt *oox_smart_art)
 
 	oox_smart_art->LoadDrawing(current_document());
 
-	if (oox_smart_art->m_diag.IsInit())
+	if (oox_smart_art->m_oDrawing.IsInit())
 	{
         _CP_OPT(double) x, y, width, height, cx = 1., cy= 1.;
 
 		odf_context()->drawing_context()->get_size (width, height);
 		odf_context()->drawing_context()->get_position (x, y);
 
-		oox_current_child_document = oox_smart_art->m_pFileContainer.GetPointer();
+		oox_current_child_document = oox_smart_art->m_pDrawingContainer.GetPointer();
 
 		odf_context()->drawing_context()->start_group();
 
 		odf_context()->drawing_context()->set_group_size (width, height, width, height);
 		odf_context()->drawing_context()->set_group_position (x, y, cx, cy);
 
-		for (size_t i = 0; i < oox_smart_art->m_diag->SpTreeElems.size(); i++)
+		for (size_t i = 0; i < oox_smart_art->m_oDrawing->SpTreeElems.size(); i++)
 		{
 			odf_context()->drawing_context()->start_drawing();
-				convert(&oox_smart_art->m_diag->SpTreeElems[i]);
+				convert(&oox_smart_art->m_oDrawing->SpTreeElems[i]);
 			odf_context()->drawing_context()->end_drawing();
 		}
 
@@ -2461,6 +2461,13 @@ void OoxConverter::convert(PPTX::Logic::Br *oox_br)
 void OoxConverter::convert(PPTX::Logic::MathParaWrapper *oox_math)
 {
 	if (!oox_math) return;
+
+	odf_context()->math_context()->in_text_box_ = true;
+	
+	convert(oox_math->m_oMathPara.GetPointer());
+	convert(oox_math->m_oMath.GetPointer());
+
+	odf_context()->math_context()->in_text_box_ = false;
 }
 void OoxConverter::convert(PPTX::Logic::LineTo *oox_geom_path)
 {

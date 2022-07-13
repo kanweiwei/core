@@ -254,6 +254,7 @@ namespace BinXlsxRW
 		void WriteFromTo(const OOX::Spreadsheet::CFromTo& oFromTo);
 		void WritePos(const OOX::Spreadsheet::CPos& oPos);
 		void WriteExt(const OOX::Spreadsheet::CExt& oExt);
+		void WriteClientData(const OOX::Spreadsheet::CClientData& oClientData);
         void WriteComments(boost::unordered_map<std::wstring, OOX::Spreadsheet::CCommentItem*>& mapComments);
 		void getSavedComment(OOX::Spreadsheet::CCommentItem& oComment, std::vector<SerializeCommon::CommentData*>& aDatas);
 		void WriteComment(OOX::Spreadsheet::CCommentItem& oComment, std::vector<SerializeCommon::CommentData*>& aCommentDatas);
@@ -287,6 +288,13 @@ namespace BinXlsxRW
 		void WriteDataValidationsContent(const OOX::Spreadsheet::CDataValidations& oDataValidations);
 		void WriteDataValidation(const OOX::Spreadsheet::CDataValidation& oDataValidation);
 		void WriteSlicers(OOX::Spreadsheet::CWorksheet& oWorksheet, const OOX::Spreadsheet::CSlicerRefs& oSlicers);
+	};
+	class BinaryCustomsTableWriter
+	{
+		BinaryCommonWriter m_oBcw;
+	public:
+		BinaryCustomsTableWriter(NSBinPptxRW::CBinaryFileWriter &oCBufferedStream);
+		void Write(OOX::IFileContainer *pContainer);
 	};
 	class BinaryCalcChainTableWriter
 	{
@@ -341,15 +349,18 @@ namespace BinXlsxRW
         _UINT32 Open(const std::wstring& sInputDir, const std::wstring& sFileDst, NSFontCutter::CEmbeddedFontsManager* pEmbeddedFontsManager,
             NSBinPptxRW::CDrawingConverter* pOfficeDrawingConverter, const std::wstring& sXMLOptions, bool bIsNoBase64);
 		
-		void intoBindoc(OOX::Document *pDocument, NSBinPptxRW::CBinaryFileWriter &oBufferedStream, NSFontCutter::CEmbeddedFontsManager* pEmbeddedFontsManager, NSBinPptxRW::CDrawingConverter* pOfficeDrawingConverter);
+		void WriteMainTableStart(NSBinPptxRW::CBinaryFileWriter &oBufferedStream);
+		void WriteContent(OOX::Document *pDocument, NSFontCutter::CEmbeddedFontsManager* pEmbeddedFontsManager, NSBinPptxRW::CDrawingConverter* pOfficeDrawingConverter);
+		void WriteMainTableEnd();
+
+		void WriteBinaryTable(const BYTE* pBuffer, size_t size);
+		//void intoBindoc(OOX::Document *pDocument, NSBinPptxRW::CBinaryFileWriter &oBufferedStream, NSFontCutter::CEmbeddedFontsManager* pEmbeddedFontsManager, NSBinPptxRW::CDrawingConverter* pOfficeDrawingConverter);
        
 		std::wstring WriteFileHeader(int nDataSize, int version);
 		int GetMainTableSize();
-	
+
 		int m_nLastFilePosOffset;
 	private:
-		void WriteMainTableStart();
-		void WriteMainTableEnd();
 		int WriteTableStart(BYTE type, int nStartPos = -1);
 		void WriteTableEnd(int nCurPos);
 	};

@@ -304,7 +304,8 @@ extern int g_nCurFormatVersion;
 		tblCaption = 17,
 		tblDescription = 18,
 		TableIndTwips = 19,
-		TableCellSpacingTwips = 20
+		TableCellSpacingTwips = 20,
+		tblOverlap = 21
 	};}
 	namespace c_oSer_tblpPrType{enum c_oSer_tblpPrType
 	{
@@ -416,7 +417,9 @@ extern int g_nCurFormatVersion;
 		FontAsciiTheme = 40,
 		FontHAnsiTheme = 41,
 		FontAETheme = 42,
-		FontCSTheme = 43
+		FontCSTheme = 43,
+		CompressText = 44,
+		SnapToGrid = 45
 	};}
 	namespace c_oSerProp_rowPrType{enum c_oSerProp_rowPrType
 	{
@@ -596,7 +599,10 @@ extern int g_nCurFormatVersion;
 		arPr = 28,
 		fldChar = 29,
 		instrText = 30,
-		delInstrText = 31
+		delInstrText = 31,
+		linebreakClearAll = 32,
+		linebreakClearLeft = 33,
+		linebreakClearRight = 34
 	};}
 	namespace c_oSerVbaProjectTypes{enum c_oSerVbaProjectType
 	{
@@ -864,7 +870,10 @@ extern int g_nCurFormatVersion;
 		BookFoldPrinting = 15,
 		BookFoldPrintingSheets = 16,
 		BookFoldRevPrinting = 17,
-		SpecialFormsHighlight = 18
+		SpecialFormsHighlight = 18,
+		DocumentProtection = 19,
+		WriteProtection = 20
+
 	};}
 	namespace c_oSer_MathPrType{enum c_oSer_SettingsType
 	{
@@ -1153,7 +1162,8 @@ extern int g_nCurFormatVersion;
 		Custom = 0,
 		ItemId = 1,
 		Uri = 2,
-		Content = 3
+		Content = 3,
+		ContentA = 4
 	};}
 	namespace c_oSerApp{enum c_oSerApp
 	{
@@ -1302,4 +1312,46 @@ extern int g_nCurFormatVersion;
 		Flags2 = 5,
 		Flags3 = 6
 	};}
+	namespace c_oDocProtect {
+		enum c_oDocProtect
+		{
+			AlgorithmName = 0,
+			Edit = 1,
+			Enforcment = 2,
+			Formatting = 3,
+			HashValue = 4,
+			SaltValue = 5,
+			SpinCount = 6,
+			
+			AlgIdExt = 7,
+			AlgIdExtSource = 8,
+			CryptAlgorithmClass = 9,
+			CryptAlgorithmSid = 10,
+			CryptAlgorithmType = 11,
+			CryptProvider = 12,
+			CryptProviderType = 13,
+			CryptProviderTypeExt = 14,
+			CryptProviderTypeExtSource = 15
+		};
+	}
+	namespace c_oWriteProtect {
+		enum c_oWriteProtect
+		{
+			AlgorithmName = 0,
+			Recommended = 1,
+			HashValue = 2,
+			SaltValue = 3,
+			SpinCount = 4,
+			
+			AlgIdExt = 7,
+			AlgIdExtSource = 8,
+			CryptAlgorithmClass = 9,
+			CryptAlgorithmSid = 10,
+			CryptAlgorithmType = 11,
+			CryptProvider = 12,
+			CryptProviderType = 13,
+			CryptProviderTypeExt = 14,
+			CryptProviderTypeExtSource = 15
+		};
+	}
 }

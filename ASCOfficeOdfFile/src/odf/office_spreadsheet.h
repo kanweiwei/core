@@ -32,9 +32,7 @@
 #pragma once
 
 #include <iosfwd>
-#include <CPOptional.h>
-#include <xml/xmlelement.h>
-#include <xml/nodetype.h>
+
 #include "office_elements.h"
 #include "office_elements_create.h"
 
@@ -54,10 +52,14 @@ public:
     virtual void xlsx_convert(oox::xlsx_conversion_context & Context);
 
 private:
-	virtual void add_attributes( const xml::attributes_wc_ptr & Attributes ){}
+	virtual void add_attributes(const xml::attributes_wc_ptr & Attributes);
     virtual void add_child_element( xml::sax * Reader, const std::wstring & Ns, const std::wstring & Name);
 
 public:
+	_CP_OPT(bool)				table_structure_protected_;
+	_CP_OPT(std::wstring)		table_protection_key_;
+	_CP_OPT(std::wstring)		table_protection_key_digest_algorithm_;
+	
 	office_element_ptr			named_expressions_;
 	office_element_ptr			database_ranges_; 
 	office_element_ptr			data_pilot_tables_;

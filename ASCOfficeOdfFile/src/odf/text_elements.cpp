@@ -32,15 +32,14 @@
 
 #include "text_elements.h"
 
-#include <xml/xmlchar.h>
-#include <xml/attributes.h>
-#include <xml/utils.h>
+#include "../../include/xml/xmlchar.h"
+#include "../../include/xml/utils.h"
 
 #include "paragraph_elements.h"
 #include "serialize_elements.h"
 #include "list.h"
 
-#include <odf/odf_document.h>
+#include "../../include/odf/odf_document.h"
 #include "odfcontext.h"
 #include "style_paragraph_properties.h"
 #include "style_text_properties.h"
@@ -301,7 +300,7 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
     {
 		is_empty = false;
     }    
-
+	_CP_OPT(std::wstring) next_masterPageName;
     if (next_element_style_name)
     {
         // проверяем не сменит ли следующий параграф свойства страницы.
@@ -309,7 +308,7 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
         // распечатать свойства раздела/секции
 		// проверить ... не она ли текущая - может быть прописан дубляж - и тогда разрыв нарисуется ненужный
 		// dump был выше уровнем
-        const _CP_OPT(std::wstring) next_masterPageName	= Context.root()->odf_context().styleContainer().master_page_name_by_name(*next_element_style_name);
+        next_masterPageName	= Context.root()->odf_context().styleContainer().master_page_name_by_name(*next_element_style_name);
 
         if ((next_masterPageName)  && (Context.get_master_page_name() != *next_masterPageName))
         {
@@ -317,7 +316,10 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
 			{
 				is_empty = false;
 			}
+			else
+				next_masterPageName = boost::none;
         }
+		else next_masterPageName = boost::none;
     } 
 	if (next_section_ || next_end_section_) // remove in text::section  - GreekSynopsis.odt
 	{
@@ -349,7 +351,18 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
     int textStyle = Context.process_paragraph_attr(&attrs_);
 
     Context.add_note_reference();
+	
+	int break_ = Context.get_page_break_before();
+	if (break_ > 0)
+	{
+		Context.set_page_break_before(0);
 
+		is_empty = false;
+		Context.add_new_run(_T(""));
+			 if (break_ == 1) Context.output_stream() << L"<w:br w:type=\"column\"/>";
+		else if (break_ == 2) Context.output_stream() << L"<w:br w:type=\"page\"/>";
+		Context.finish_run();
+	}
   	for (size_t i = index; i < content_.size(); i++)
 	{
 		if (Context.get_page_break())
@@ -396,14 +409,16 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
 		Context.docx_convert_delayed();
 	}
 
-    if (Context.get_page_break_after())
+	break_ = Context.get_page_break_after();
+    if (break_ > 0)
     {
-		Context.set_page_break_after(false);
+		Context.set_page_break_after(0);
 
 		is_empty = false;
         Context.add_new_run(_T(""));
-			Context.output_stream() << L"<w:br w:type=\"page\"/>";        
-        Context.finish_run();
+				 if (break_ == 1) Context.output_stream() << L"<w:br w:type=\"column\"/>";
+			else if (break_ == 2) Context.output_stream() << L"<w:br w:type=\"page\"/>";
+		Context.finish_run();		
     }
 
 	if (is_empty)
@@ -411,6 +426,18 @@ void paragraph::docx_convert(oox::docx_conversion_context & Context, _CP_OPT(std
 
 	Context.end_paragraph_style();
 	Context.finish_paragraph();
+
+	if (next_masterPageName)
+	{
+		Context.set_master_page_name(*next_masterPageName);
+		std::wstring masterPageNameLayout = Context.root()->odf_context().pageLayoutContainer().page_layout_name_by_style(*next_masterPageName);
+
+		if (false == masterPageNameLayout.empty())
+		{
+			Context.remove_page_properties();
+			Context.add_page_properties(masterPageNameLayout);
+		}
+	}
 }
 
 void paragraph::xlsx_convert(oox::xlsx_conversion_context & Context)
@@ -439,7 +466,7 @@ void soft_page_break::docx_convert(oox::docx_conversion_context & Context)
 	if (Context.process_headers_footers_) 
 		return;
 	
-	if (!Context.get_page_break_after() && !Context.get_page_break_before())
+	if (0 == Context.get_page_break_after() && 0 == Context.get_page_break_before())
 	{
 		Context.output_stream() << L"<w:lastRenderedPageBreak/>";
 	}

@@ -1,14 +1,19 @@
 ﻿#ifndef _BUILD_NATIVE_CONTROL_V8_BASE_H_
 #define _BUILD_NATIVE_CONTROL_V8_BASE_H_
 
+#ifdef V8_INSPECTOR
+#include "inspector/inspector_interface.h"
+#endif
+
 #include "../js_base.h"
+#include "../js_logger.h"
 #include <iostream>
 
 #include "v8.h"
 #include "libplatform/libplatform.h"
 #include "src/base/sys-info.h"
 
-#ifdef V8_VERSION_87_PLUS
+#ifdef V8_VERSION_89_PLUS
 #define kV8NormalString v8::NewStringType::kNormal
 #define kV8ProduceCodeCache v8::ScriptCompiler::kEagerCompile
 #define V8ContextFirstArg CV8Worker::GetCurrentContext(),
@@ -61,7 +66,7 @@ public:
 class CV8Initializer
 {
 private:
-#ifdef V8_VERSION_87_PLUS
+#ifdef V8_VERSION_89_PLUS
     std::unique_ptr<v8::Platform> m_platform;
 #else
     v8::Platform* m_platform;
@@ -69,6 +74,14 @@ private:
     v8::ArrayBuffer::Allocator* m_pAllocator;
 
 public:
+    v8::Platform* getPlatform()
+    {
+#ifdef V8_VERSION_89_PLUS
+        return m_platform.get();
+#else
+        return m_platform;
+#endif
+    }
     CV8Initializer()
     {
         std::wstring sPrW = NSFile::GetProcessPath();
@@ -79,7 +92,7 @@ public:
     #ifndef V8_OS_XP
         v8::V8::InitializeICUDefaultLocation(sPrA.c_str());
         v8::V8::InitializeExternalStartupData(sPrA.c_str());
-        #ifdef V8_VERSION_87_PLUS
+        #ifdef V8_VERSION_89_PLUS
         m_platform = v8::platform::NewDefaultPlatform();
         v8::V8::InitializePlatform(m_platform.get());
         #else
@@ -98,7 +111,7 @@ public:
     {
         v8::V8::Dispose();
         v8::V8::ShutdownPlatform();
-        #ifndef V8_VERSION_87_PLUS
+        #ifndef V8_VERSION_89_PLUS
         delete m_platform;
         #endif
         if (m_pAllocator)
@@ -317,7 +330,7 @@ namespace NSJSBase
 
         virtual bool toBool()
         {
-#ifdef V8_VERSION_87_PLUS
+#ifdef V8_VERSION_89_PLUS
             return value.IsEmpty() ? false : value->BooleanValue(V8IsolateOneArg);
 #else
             return value.IsEmpty() ? false : value->BooleanValue(V8ContextOneArg).V8ToChecked();
@@ -410,6 +423,11 @@ namespace NSJSBase
 
         virtual JSSmart<CJSValue> call_func(const char* name, const int argc = 0, JSSmart<CJSValue> argv[] = NULL)
         {
+#ifdef V8_INSPECTOR
+            v8_debug::before(V8ContextFirstArg CV8Worker::getInitializer()->getPlatform(), "");
+#endif
+            LOGGER_START
+
             v8::Local<v8::String> _name = CreateV8String(CV8Worker::GetCurrent(), name);
             v8::Handle<v8::Value> _func = value->Get(V8ContextFirstArg _name).ToLocalChecked();
 
@@ -438,6 +456,8 @@ namespace NSJSBase
                     RELEASEARRAYOBJECTS(args);
                 }
             }
+
+            LOGGER_LAP_NAME(name)
 
             JSSmart<CJSValue> _ret = _return;
             return _ret;

@@ -523,9 +523,11 @@ public:
 		std::vector<std::wstring>	content;	//delete elements		
 		bool						active = false;
 		bool						in_drawing = false;
-	
+		bool						out_active = false;
+
 		void clear()
 		{
+			out_active = false;
 			type = 0;
 			id.clear();
 			author.clear();
@@ -799,6 +801,8 @@ public:
 	bool next_dump_section_;
 	bool last_dump_page_properties_;
 
+	int nFormFieldId_ = 0;
+
     odf_reader::odf_document *root()
     {
         return odf_document_;
@@ -853,11 +857,11 @@ public:
    
 	odf_reader::style_text_properties_ptr current_text_properties();
 
-    void set_page_break_after(bool val);
-    bool get_page_break_after();
+    void set_page_break_after(int val);
+    int get_page_break_after();
 
-    void set_page_break_before(bool val);
-    bool get_page_break_before();
+    void set_page_break_before(int val);
+    int get_page_break_before();
 
 	void set_page_break		(bool val);
     bool get_page_break		();
@@ -1044,8 +1048,8 @@ private:
     
 	bool first_element_list_item_;
     
-	bool page_break_after_;
-    bool page_break_before_;
+	int page_break_after_; // 0 = false, 1 - column, 2 -page
+    int page_break_before_;
 	bool page_break_;
 
 	bool in_automatic_style_; 

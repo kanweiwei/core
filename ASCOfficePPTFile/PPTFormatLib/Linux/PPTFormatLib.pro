@@ -32,6 +32,7 @@ HEADERS += \
     ../Enums/enums.h \
     ../PPTFormatLib.h \
     ../PPTXWriter/Animation.h \
+    ../PPTXWriter/BulletsConverter.h \
     ../PPTXWriter/TableWriter.h \
     ../PPTXWriter/TxBodyConverter.h \
     ../Reader/ClassesAtom.h \
@@ -42,6 +43,7 @@ HEADERS += \
     ../Reader/PPTFileReader.h \
     ../Reader/ReadStructures.h \
     ../Reader/Records.h \
+    ../Reader/RoundTripExtractor.h \
     ../Reader/Slide.h \
     ../Reader/SlideInfo.h \
     ../Reader/SlidePersist.h \
@@ -108,6 +110,7 @@ HEADERS += \
     ../Records/Animations/VisualShapeGeneralAtom.h \
     ../Records/Animations/VisualSoundAtom.h \
     ../Records/Animations/_includer.h \
+    ../Records/BlipCollection9Container.h \
     ../Records/BlipEntityAtom.h \
     ../Records/BookmarkEntityAtom.h \
     ../Records/BookmarkSeedAtom.h \
@@ -118,7 +121,7 @@ HEADERS += \
     ../Records/OfficeArtClientData.h \
     ../Records/OfficeArtClientTextbox.h \
     ../Records/PlaceHolderAtom.h \
-    ../Records/RoundTripOArtTextStyles12Atom.h \
+    ../Records/RoundTrip.h \
     ../Records/ShapeProgBinaryTagSubContainerOrAtom.h \
     ../Records/CFMasks.h \
     ../Records/ColorSchemeAtom.h \
@@ -171,11 +174,6 @@ HEADERS += \
     ../Records/PlaceHolderAtom.h \
     ../Records/ProgStringTagContainer.h \
     ../Records/RecordsIncluder.h \
-    ../Records/RoundTripColorMappingAtom.h \
-    ../Records/RoundTripCompositeMainMasterId12Atom.h \
-    ../Records/RoundTripNewPlaceholderId12Atom.h \
-    ../Records/RoundTripOriginalMainMasterId12Atom.h \
-    ../Records/RoundTripThemeAtom.h \
     ../Records/ShapeFlags10Atom.h \
     ../Records/ShapeFlagsAtom.h \
     ../Records/Comment10Container.h \
@@ -276,24 +274,28 @@ SOURCES += \
 
 core_debug {
 SOURCES += \
+    ../Enums/RecordType.cpp \
+    ../PPTFormatLib.cpp \
     ../Reader/ReadStructures.cpp \
+    ../Reader/RoundTripExtractor.cpp \
     ../Reader/PPTDocumentInfoOneUser.cpp \
     ../Reader/Records.cpp \
     ../Reader/PPTFileReader.cpp \
     ../Reader/SlidePersist.cpp \
-    ../Records/Drawing/ArtBlip.cpp \
-    ../Records/Drawing/ShapeContainer.cpp \
     ../PPTXWriter/Converter.cpp \
-    ../PPTXWriter/ShapeWriter.cpp
-}
-
-SOURCES += \
-    ../Enums/RecordType.cpp \
-    ../PPTFormatLib.cpp \
-    ../../../ASCOfficePPTXFile/Editor/Drawing/Elements.cpp \
-    ../../../ASCOfficePPTXFile/Editor/Drawing/TextAttributesEx.cpp \
-    ../../../Common/3dParty/pole/pole.cpp \
+    ../PPTXWriter/ShapeWriter.cpp \
     ../PPTXWriter/Animation.cpp \
     ../PPTXWriter/TableWriter.cpp \
     ../PPTXWriter/TxBodyConverter.cpp \
-    ../Records/Animations/TimeVariant.cpp
+    ../Records/Drawing/ArtBlip.cpp \
+    ../Records/Drawing/ShapeContainer.cpp \
+    ../Records/Animations/TimeVariant.cpp \
+    ../Records/BlipEntityAtom.cpp
+}
+
+SOURCES += \
+    ../../../ASCOfficePPTXFile/Editor/Drawing/Elements.cpp \
+    ../../../ASCOfficePPTXFile/Editor/Drawing/TextAttributesEx.cpp \
+    ../../../Common/3dParty/pole/pole.cpp \
+    ../PPTXWriter/BulletsConverter.cpp
+

@@ -883,6 +883,17 @@ void CPPTElement::SetUpPropertyImage(CElementPtr pElement, CTheme* pTheme, CSlid
     case pibFlags:
     {
     }break;
+    case pictureContrast:
+        image_element->m_lpictureContrast = (_INT32)pProperty->m_lValue;
+        break;
+    case pictureBrightness:
+        image_element->m_lpictureBrightness = (_INT32)pProperty->m_lValue;
+        break;
+    case fillBackColor:
+        // TODO to fix 53541
+        break;
+    default:
+        break;
     }
 }
 void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlideInfo* pInfo, CSlide* pSlide, CProperty* pProperty)
@@ -927,6 +938,10 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         if (utf8Data && utf8DataSize > 0)
         {
             pParentShape->m_strXmlString = NSFile::CUtf8Converter::GetUnicodeStringFromUTF8(utf8Data, utf8DataSize);
+            //            std::string filename = std::to_string(nRTCounter++) + "_shape.xml";
+            //            std::ofstream file("data/" + filename, std::ios::out);
+            //            file.write((char*)utf8Data, utf8DataSize);
+            //            file.close();
 
             delete []utf8Data;
         }
@@ -1254,27 +1269,27 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
     }break;
     case ODRAW::c3DSpecularAmt:
     {
-        pShape->m_o3dOptions.dSpecularAmt = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dSpecularAmt = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DDiffuseAmt:
     {
-        pShape->m_o3dOptions.dDiffuseAmt = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dDiffuseAmt = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DShininess:
     {
-        pShape->m_o3dOptions.dShininess = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dShininess = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DEdgeThickness:
     {
-        pShape->m_o3dOptions.nEdgeThickness = pProperty->m_lValue;
+        pShape->m_3dOptions.nEdgeThickness = pProperty->m_lValue;
     }break;
     case ODRAW::C3DExtrudeForward:
     {
-        pShape->m_o3dOptions.nExtrudeForward = pProperty->m_lValue;
+        pShape->m_3dOptions.nExtrudeForward = pProperty->m_lValue;
     }break;
     case ODRAW::c3DExtrudeBackward:
     {
-        pShape->m_o3dOptions.nExtrudeBackward = pProperty->m_lValue;
+        pShape->m_3dOptions.nExtrudeBackward = pProperty->m_lValue;
     }break;
     case ODRAW::c3DExtrudePlane:
     {
@@ -1289,7 +1304,7 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         if(oAtom.bSysIndex)	tmp = CorrectSysColor(pProperty->m_lValue, pElement, pTheme);
         else				oAtom.ToColor(&tmp);
 
-        pShape->m_o3dOptions.oExtrusionColor = tmp;
+        pShape->m_3dOptions.oExtrusionColor = tmp;
     }break;
     case ODRAW::c3DCrMod:
     {
@@ -1300,7 +1315,7 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         if(oAtom.bSysIndex)	tmp = CorrectSysColor(pProperty->m_lValue, pElement, pTheme);
         else				oAtom.ToColor(&tmp);
 
-        pShape->m_o3dOptions.oCrMod = tmp;
+        pShape->m_3dOptions.oCrMod = tmp;
     }break;
     case ODRAW::c3DExtrusionColorExt:
     {
@@ -1310,35 +1325,35 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         CColor tmp;
         if(oAtom.bSysIndex)	tmp = CorrectSysColor(pProperty->m_lValue, pElement, pTheme);
         else				oAtom.ToColor(&tmp);
-        pShape->m_o3dOptions.oExtrusionColorExt = tmp;
+        pShape->m_3dOptions.oExtrusionColorExt = tmp;
     }break;
     case ODRAW::c3DExtrusionColorExtMod:
     {
-        pShape->m_o3dOptions.nTypeExtrusionColorExt = (pProperty->m_lValue & 0x00000300) >> 8;
+        pShape->m_3dOptions.nTypeExtrusionColorExt = (pProperty->m_lValue & 0x00000300) >> 8;
     }break;
     case ODRAW::c3DBottomBevelWidth:
     {
-        pShape->m_o3dOptions.dBottomBevelWidth = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dBottomBevelWidth = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DBottomBevelHeight:
     {
-        pShape->m_o3dOptions.dBottomBevelHeight = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dBottomBevelHeight = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DBottomBevelType:
     {
-        pShape->m_o3dOptions.nBottomBevelType = pProperty->m_lValue;
+        pShape->m_3dOptions.nBottomBevelType = pProperty->m_lValue;
     }break;
     case ODRAW::c3DTopBevelWidth:
     {
-        pShape->m_o3dOptions.dTopBevelWidth = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dTopBevelWidth = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DTopBevelHeight:
     {
-        pShape->m_o3dOptions.dTopBevelHeight = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dTopBevelHeight = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DTopBevelType:
     {
-        pShape->m_o3dOptions.nTopBevelType = pProperty->m_lValue;
+        pShape->m_3dOptions.nTopBevelType = pProperty->m_lValue;
     }break;
     case ODRAW::threeDObjectBooleanProperties:
     {
@@ -1347,125 +1362,125 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         bool fUsefc3DUseExtrusionColor	= GETBIT(pProperty->m_lValue, 17);
         bool fUsefc3DLightFace			= GETBIT(pProperty->m_lValue, 16);
 
-        pShape->m_o3dOptions.bEnabled		= fUsef3D					? GETBIT(pProperty->m_lValue, 3)	: false;
-        pShape->m_o3dOptions.bMetallic		= fUsefc3DMetallic			? GETBIT(pProperty->m_lValue, 2)	: false;
-        pShape->m_o3dOptions.bExtrusionColor= fUsefc3DUseExtrusionColor	? GETBIT(pProperty->m_lValue, 1)	: false;
-        pShape->m_o3dOptions.bLightFace		= fUsefc3DLightFace			? GETBIT(pProperty->m_lValue, 0)	: true;
+        pShape->m_3dOptions.bEnabled		= fUsef3D					? GETBIT(pProperty->m_lValue, 3)	: false;
+        pShape->m_3dOptions.bMetallic		= fUsefc3DMetallic			? GETBIT(pProperty->m_lValue, 2)	: false;
+        pShape->m_3dOptions.bExtrusionColor= fUsefc3DUseExtrusionColor	? GETBIT(pProperty->m_lValue, 1)	: false;
+        pShape->m_3dOptions.bLightFace		= fUsefc3DLightFace			? GETBIT(pProperty->m_lValue, 0)	: true;
 
     }break;
     case ODRAW::c3DYRotationAngle:
     {
         double val = FixedPointToDouble(pProperty->m_lValue);
         if (val < 0) val += 360;
-        pShape->m_o3dOptions.dYRotationAngle = val;
+        pShape->m_3dOptions.dYRotationAngle = val;
     }break;
     case ODRAW::c3DXRotationAngle:
     {
         double val = FixedPointToDouble(pProperty->m_lValue);
         if (val < 0) val += 360;
-        pShape->m_o3dOptions.dXRotationAngle = val;
+        pShape->m_3dOptions.dXRotationAngle = val;
     }break;
     case ODRAW::c3DRotationAxisX:
     {
-        pShape->m_o3dOptions.dRotationAxisX = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationAxisX = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationAxisY:
     {
-        pShape->m_o3dOptions.dRotationAxisY = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationAxisY = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationAxisZ:
     {
-        pShape->m_o3dOptions.dRotationAxisZ = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationAxisZ = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationAngle:
     {
-        pShape->m_o3dOptions.dRotationAngle = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationAngle = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationCenterX:
     {
-        pShape->m_o3dOptions.dRotationCenterX = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationCenterX = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationCenterY:
     {
-        pShape->m_o3dOptions.dRotationCenterY = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationCenterY = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRotationCenterZ:
     {
-        pShape->m_o3dOptions.dRotationCenterZ = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dRotationCenterZ = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DRenderMode:
     {
-        pShape->m_o3dOptions.nRenderMode = pProperty->m_lValue;
+        pShape->m_3dOptions.nRenderMode = pProperty->m_lValue;
     }break;
     case ODRAW::c3DTolerance:
     {
-        pShape->m_o3dOptions.dTolerance = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dTolerance = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DXViewpoint:
     {
-        pShape->m_o3dOptions.dXViewpoint = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dXViewpoint = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DYViewpoint:
     {
-        pShape->m_o3dOptions.dYViewpoint = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dYViewpoint = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DZViewpoint:
     {
-        pShape->m_o3dOptions.dZViewpoint = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dZViewpoint = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DOriginX:
     {
-        pShape->m_o3dOptions.dOriginX = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dOriginX = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DOriginY:
     {
-        pShape->m_o3dOptions.dOriginY = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dOriginY = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DSkewAngle:
     {
         double val = FixedPointToDouble(pProperty->m_lValue);
         if (val <= 0) val += 360;
-        pShape->m_o3dOptions.dSkewAngle = val;
+        pShape->m_3dOptions.dSkewAngle = val;
     }break;
     case ODRAW::c3DSkewAmount:
     {
-        pShape->m_o3dOptions.nSkewAmount = pProperty->m_lValue;
+        pShape->m_3dOptions.nSkewAmount = pProperty->m_lValue;
     }break;
     case ODRAW::c3DAmbientIntensity:
     {
-        pShape->m_o3dOptions.dAmbientIntensity = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dAmbientIntensity = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DKeyX:
     {
-        pShape->m_o3dOptions.dKeyX = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dKeyX = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DKeyY:
     {
-        pShape->m_o3dOptions.dKeyY = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dKeyY = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DKeyZ:
     {
-        pShape->m_o3dOptions.dKeyZ = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dKeyZ = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DKeyIntensity:
     {
-        pShape->m_o3dOptions.dKeyIntensity = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dKeyIntensity = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DFillX:
     {
-        pShape->m_o3dOptions.dFillX = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dFillX = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DFillY:
     {
-        pShape->m_o3dOptions.dFillY = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dFillY = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DFillZ:
     {
-        pShape->m_o3dOptions.dFillZ = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dFillZ = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::c3DFillIntensity:
     {
-        pShape->m_o3dOptions.dFillIntensity = FixedPointToDouble(pProperty->m_lValue);
+        pShape->m_3dOptions.dFillIntensity = FixedPointToDouble(pProperty->m_lValue);
     }break;
     case ODRAW::threeDStyleBooleanProperties:
     {
@@ -1475,11 +1490,11 @@ void CPPTElement::SetUpPropertyShape(CElementPtr pElement, CTheme* pTheme, CSlid
         bool fUsefc3DKeyHarsh			= GETBIT(pProperty->m_lValue, 17);
         bool fUsefc3DFillHarsh			= GETBIT(pProperty->m_lValue, 16);
 
-        pShape->m_o3dOptions.bConstrainRotation	= fUsefc3DConstrainRotation	? GETBIT(pProperty->m_lValue, 4)	: true;
-        pShape->m_o3dOptions.bRotationCenterAuto= fUsefc3DRotationCenterAuto? GETBIT(pProperty->m_lValue, 3)	: false;
-        pShape->m_o3dOptions.bParallel			= fUsefc3DParallel			? GETBIT(pProperty->m_lValue, 2)	: true;
-        pShape->m_o3dOptions.bKeyHarsh			= fUsefc3DKeyHarsh			? GETBIT(pProperty->m_lValue, 1)	: true;
-        pShape->m_o3dOptions.bFillHarsh			= fUsefc3DFillHarsh			? GETBIT(pProperty->m_lValue, 0)	: true;
+        pShape->m_3dOptions.bConstrainRotation	= fUsefc3DConstrainRotation	? GETBIT(pProperty->m_lValue, 4)	: true;
+        pShape->m_3dOptions.bRotationCenterAuto= fUsefc3DRotationCenterAuto? GETBIT(pProperty->m_lValue, 3)	: false;
+        pShape->m_3dOptions.bParallel			= fUsefc3DParallel			? GETBIT(pProperty->m_lValue, 2)	: true;
+        pShape->m_3dOptions.bKeyHarsh			= fUsefc3DKeyHarsh			? GETBIT(pProperty->m_lValue, 1)	: true;
+        pShape->m_3dOptions.bFillHarsh			= fUsefc3DFillHarsh			? GETBIT(pProperty->m_lValue, 0)	: true;
     }break;
     default:
     {
@@ -1510,7 +1525,7 @@ CElementPtr CRecordShapeContainer::GetElement (bool inGroup, CExMedia* pMapIDs,
     GetRecordsByType(&oArrayOptions, true, /*true*/false/*secondary & tetriary*/);
 
     PPTShapes::ShapeType eType = (PPTShapes::ShapeType)oArrayShape[0]->m_oHeader.RecInstance;
-    ElementType			elType = GetTypeElem((ODRAW::eSPT)oArrayShape[0]->m_oHeader.RecInstance);
+    PPT_FORMAT::ElementType elType = GetTypeElem((ODRAW::eSPT)oArrayShape[0]->m_oHeader.RecInstance);
 
     int lMasterID = -1;
 
@@ -1716,7 +1731,7 @@ CElementPtr CRecordShapeContainer::GetElement (bool inGroup, CExMedia* pMapIDs,
         CorrectPlaceholderType(pElement->m_lPlaceholderType);
     }
 
-    std::vector<CRecordRoundTripHFPlaceholder12Atom*> oArrayHFPlaceholder;
+    std::vector<RoundTripHFPlaceholder12Atom*> oArrayHFPlaceholder;
     GetRecordsByType(&oArrayHFPlaceholder, true, true);
     if (0 < oArrayHFPlaceholder.size())
     {
@@ -1836,9 +1851,9 @@ CElementPtr CRecordShapeContainer::GetElement (bool inGroup, CExMedia* pMapIDs,
     }
 
 
-
     //--------- наличие текста --------------------------------------------------------------------------
     CShapeElement* pShapeElem = dynamic_cast<CShapeElement*>(pElement.get());
+
     if (NULL != pShapeElem)
     {
         CElementInfo oElementInfo;
@@ -1961,6 +1976,7 @@ CElementPtr CRecordShapeContainer::GetElement (bool inGroup, CExMedia* pMapIDs,
                 pShapeElem->m_oTextActions.m_arRanges.push_back(oRange);
             }
         }
+
         double dAngle = pShapeElem->m_dRotate;
         if (0 <= dAngle)
         {
@@ -2051,7 +2067,7 @@ bool CRecordShapeContainer::isTable() const
         {
             if ((prop.m_ePID == tableProperties ||
                  prop.m_ePID == tableRowProperties) &&
-                bGroupShape)
+                    bGroupShape)
             {
                 return true;
             }
@@ -2074,26 +2090,26 @@ std::wstring CRecordShapeContainer::getTableXmlStr() const
         ULONG utf8DataSize = 0;
         auto& xmlProp = oArrayOptions[1]->m_oProperties.m_arProperties[2]; //id == 0x2065 ?
 
-		if (xmlProp.m_pOptions && xmlProp.m_lValue > 0) // file513.ppt
-		{
-			std::wstring temp = NSDirectory::GetTempPath();
-			std::wstring tempFileName = temp + FILE_SEPARATOR_STR + L"tempMetroBlob.zip";
+        if (xmlProp.m_pOptions && xmlProp.m_lValue > 0) // file513.ppt
+        {
+            std::wstring temp = NSDirectory::GetTempPath();
+            std::wstring tempFileName = temp + FILE_SEPARATOR_STR + L"tempMetroBlob.zip";
 
-			NSFile::CFileBinary file;
-			if (file.CreateFileW(tempFileName))
-			{
-				file.WriteFile(xmlProp.m_pOptions, xmlProp.m_lValue);
-				file.CloseFile();
-			}
+            NSFile::CFileBinary file;
+            if (file.CreateFileW(tempFileName))
+            {
+                file.WriteFile(xmlProp.m_pOptions, xmlProp.m_lValue);
+                file.CloseFile();
+            }
 
-			if (S_OK == officeUtils.LoadFileFromArchive(tempFileName, L"drs/e2oDoc.xml", &utf8Data, utf8DataSize))
-			{
-				xmlStr = NSFile::CUtf8Converter::GetUnicodeStringFromUTF8(utf8Data, utf8DataSize);
-			}
+            if (S_OK == officeUtils.LoadFileFromArchive(tempFileName, L"drs/e2oDoc.xml", &utf8Data, utf8DataSize))
+            {
+                xmlStr = NSFile::CUtf8Converter::GetUnicodeStringFromUTF8(utf8Data, utf8DataSize);
+            }
 
-			delete[] utf8Data;
-			NSFile::CFileBinary::Remove(tempFileName);
-		}
+            delete[] utf8Data;
+            NSFile::CFileBinary::Remove(tempFileName);
+        }
     }
 
     return xmlStr;
@@ -2121,7 +2137,8 @@ void CRecordShapeContainer::ApplyThemeStyle(CElementPtr pElem, CTheme* pTheme, C
     }
 
     pText->ApplyThemeStyle(pTheme);
-
+    // AutoNumbering and BulletBlip
+    ConvertStyleTextProp9(pText);
 }
 void CRecordShapeContainer::SetUpTextStyle(std::wstring& strText, CTheme* pTheme, CLayout* pLayout, CElementPtr pElem, CSlideInfo* pThemeWrapper, CSlideInfo* pSlideWrapper, CSlide* pSlide, CRecordMasterTextPropAtom* master_levels)
 {
@@ -2588,8 +2605,8 @@ void CRecordShapeContainer::ApplyHyperlink(CShapeElement* pShape, CColor& oColor
             const int posBlockStart = posOrigText;
             const int posOrigSpanEnd = posBlockStart + iterSpan->m_strText.length();
             const int posBlockEnd = isHyperlink ?
-				(std::min)(posOrigSpanEnd, iterRange->m_lEnd)  :
-				(std::min)(posOrigSpanEnd, iterRange->m_lStart);
+                        (std::min)(posOrigSpanEnd, iterRange->m_lEnd)  :
+                        (std::min)(posOrigSpanEnd, iterRange->m_lStart);
             const size_t blockLen = posBlockEnd - posBlockStart;
 
             const bool isNeedToSplit = posBlockEnd < posOrigSpanEnd && isHyperlink;
@@ -2621,13 +2638,13 @@ void CRecordShapeContainer::ApplyHyperlink(CShapeElement* pShape, CColor& oColor
                     iterSpan->m_strText = originalText.substr(posBlockEnd, nextBlockLen);
                     iterSpan->m_arrInteractive.clear();
                     // Return to current span
-					iterSpan--;
+                    iterSpan--;
                 }
 
-				if (iterSpan != arrSpans.end() && iterInteractive != arrSplitedInteractive.end())
-					addHyperlinkToSpan(*iterSpan, *iterInteractive, oColor);
-				else
-					break; //GZoabli_PhD.ppt
+                if (iterSpan != arrSpans.end() && iterInteractive != arrSplitedInteractive.end())
+                    addHyperlinkToSpan(*iterSpan, *iterInteractive, oColor);
+                else
+                    break; //GZoabli_PhD.ppt
 
                 if (posBlockEnd == iterRange->m_lEnd)
                 {
@@ -2648,7 +2665,7 @@ void CRecordShapeContainer::ApplyHyperlink(CShapeElement* pShape, CColor& oColor
                 const size_t nextBlockLen = posOrigSpanEnd - posBlockEnd;
                 iterSpan->m_strText = originalText.substr(posBlockEnd, nextBlockLen);
                 iterSpan->m_arrInteractive.clear();
-                 // Return to current span
+                // Return to current span
                 iterSpan--;
             }
         }
@@ -2659,10 +2676,35 @@ void CRecordShapeContainer::ApplyHyperlink(CShapeElement* pShape, CColor& oColor
 
 void CRecordShapeContainer::addHyperlinkToSpan(CSpan &oSpan, const std::vector<CInteractiveInfo> &arrInteractive, const CColor &oColor)
 {
-    oSpan.m_oRun.Color = oColor;
-    oSpan.m_oRun.FontUnderline = (bool)true;
-    oSpan.m_arrInteractive = arrInteractive;
+    if (isRealHyperlink(arrInteractive))
+    {
+        oSpan.m_oRun.Color = oColor;
+        oSpan.m_oRun.FontUnderline = (bool)true;
+        oSpan.m_arrInteractive = arrInteractive;
+    }
 }
+
+bool CRecordShapeContainer::isRealHyperlink(const std::vector<CInteractiveInfo> &arrInteractive)
+{
+    bool isReal = false;
+    for (const auto& interInfo : arrInteractive)
+    {
+        switch (interInfo.m_lHyperlinkType)
+        {
+        case LT_Url:
+            if (interInfo.m_strHyperlink.size())
+                isReal = true;
+            break;
+        default:
+            isReal = true;
+            break;
+        }
+    }
+
+    return isReal;
+}
+
+
 
 std::vector<std::vector<CInteractiveInfo> > CRecordShapeContainer::splitInteractive(const std::vector<CInteractiveInfo> &arrInteractive)
 {
@@ -2721,6 +2763,97 @@ void CRecordShapeContainer::ConvertInteractiveInfo(CInteractiveInfo &interactive
     interactiveInfo.m_bVisited			= interactiveAtom.m_bVisited;
 
 }
+
+void CRecordShapeContainer::ConvertStyleTextProp9(CTextAttributesEx *pText)
+{
+
+    std::vector<CRecordOfficeArtClientData*> arrOfficeData;
+    GetRecordsByType(&arrOfficeData, false, true);
+
+    if (arrOfficeData.empty())
+        return;
+
+    auto pUnknownBinaryTag =arrOfficeData[0]->getProgTag(___PPT9);
+    if (pUnknownBinaryTag == nullptr)
+        return;
+    auto progTag9 = dynamic_cast<CRecordPP9ShapeBinaryTagExtension*>(pUnknownBinaryTag->m_pTagContainer);
+    if (progTag9 == nullptr)
+        return;
+
+    const auto& arrStyleTextProp9 = progTag9->m_styleTextPropAtom.m_rgStyleTextProp9;
+    if (arrStyleTextProp9.empty())
+        return;
+
+    WORD pp9rt = 0;
+    auto& arrPars  = pText->m_arParagraphs;
+    for (auto& par : arrPars)
+    {
+        if (par.m_arSpans.empty())
+            continue;
+
+        if (par.m_arSpans[0].m_oRun.pp9rt.is_init())
+            pp9rt = par.m_arSpans[0].m_oRun.pp9rt.get();
+
+        if (pp9rt >= arrStyleTextProp9.size())
+            continue;
+
+        auto& prop9 = arrStyleTextProp9[pp9rt];
+
+        if (prop9.m_pf9.m_optBulletAutoNumberScheme.is_init() &&
+                prop9.m_pf9.m_optfBulletHasAutoNumber.get_value_or(false))
+        {
+            auto* pBuAutoNum = new CBulletAutoNum;
+            pBuAutoNum->type = prop9.m_pf9.m_optBulletAutoNumberScheme->SchemeToStr();
+            pBuAutoNum->startAt = prop9.m_pf9.m_optBulletAutoNumberScheme->m_nStartNum;
+
+            par.m_oPFRun.bulletAutoNum.reset(pBuAutoNum);
+        }
+        if (prop9.m_pf9.m_optBulletBlipRef.is_init())
+        {
+            auto* pBuBlip = new CBulletBlip;
+            if (prop9.m_pf9.m_optBulletBlipRef.IsInit())
+                pBuBlip->bulletBlipRef = prop9.m_pf9.m_optBulletBlipRef.get();
+            else
+                pBuBlip->bulletBlipRef = -1;
+
+            par.m_oPFRun.bulletBlip.reset(pBuBlip);
+        }
+    }
+
+}
+
+//void CRecordShapeContainer::ConvertExtention9(CElement* pElement)
+//{
+//    if (pElement == nullptr)
+//        return;
+
+//    std::vector<CRecordOfficeArtClientData*> arrOfficeData;
+//    GetRecordsByType(&arrOfficeData, false, true);
+
+//    if (arrOfficeData.empty())
+//        return;
+
+//    auto pUnknownBinaryTag =arrOfficeData[0]->getProgTag(___PPT9);
+//    if (pUnknownBinaryTag == nullptr)
+//        return;
+//    auto progTag9 = dynamic_cast<CRecordPP9ShapeBinaryTagExtension*>(pUnknownBinaryTag->m_pTagContainer);
+//    if (progTag9 == nullptr)
+//        return;
+
+//    const auto& arrStyleTextProp9 = progTag9->m_styleTextPropAtom.m_rgStyleTextProp9;
+
+//    for (const auto& textProp9 : arrStyleTextProp9)
+//    {
+//        CBulletBlip buBlip;
+//        if (textProp9.m_pf9.m_optBulletBlipRef.IsInit())
+//            buBlip.bulletBlipRef = textProp9.m_pf9.m_optBulletBlipRef.get();
+//        else
+//            buBlip.bulletBlipRef = -1;
+
+//        pElement->m_arrBlip.push_back(buBlip);
+//    }
+
+//}
 
 void CRecordGroupShapeContainer::ReadFromStream(SRecordHeader & oHeader, POLE::Stream* pStream)
 {
